@@ -1,0 +1,124 @@
+package vv0ta3fa9.plugin.kMobWaves.main;
+
+import org.bukkit.Bukkit;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+import vv0ta3fa9.plugin.kMobWaves.KMobWaves;
+
+/**
+ * Менеджер для управления BossBar отображением прогресса волн
+ */
+public class BossBarManager {
+    
+    private final KMobWaves plugin;
+    private BossBar bossBar;
+    private int currentWave;
+    private int totalMobs;
+    
+    public BossBarManager(@NotNull KMobWaves plugin) {
+        this.plugin = plugin;
+    }
+    
+    /**
+     * Создает новый BossBar для волны
+     */
+    public void createBossBar(int waveNumber, int totalMobs, String customTitle) {
+        if (!plugin.getConfigManager().isBossBarEnabled()) {
+            return;
+        }
+        
+        removeBossBar();
+        
+        this.currentWave = waveNumber;
+        this.totalMobs = totalMobs;
+        
+        String title = customTitle != null ? customTitle : plugin.getConfigManager().getBossBarTitle();
+        title = formatTitle(title, totalMobs, totalMobs);
+        title = plugin.getConfigManager().COLORIZER.colorize(title);
+        
+        BarColor color = parseColor(plugin.getConfigManager().getBossBarColor());
+        BarStyle style = parseStyle(plugin.getConfigManager().getBossBarStyle());
+        
+        bossBar = Bukkit.createBossBar(title, color, style);
+        bossBar.setProgress(1.0);
+        
+        // Добавляем всех онлайн игроков
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            bossBar.addPlayer(player);
+        }
+    }
+    
+    /**
+     * Обновляет прогресс BossBar
+     */
+    public void updateProgress(int remainingMobs) {
+        if (bossBar == null || !plugin.getConfigManager().isBossBarEnabled()) {
+            return;
+        }
+        
+        String title = plugin.getConfigManager().getBossBarTitle();
+        title = formatTitle(title, remainingMobs, totalMobs);
+        title = plugin.getConfigManager().COLORIZER.colorize(title);
+        
+        bossBar.setTitle(title);
+        
+        double progress = totalMobs > 0 ? (double) remainingMobs / totalMobs : 0.0;
+        bossBar.setProgress(Math.max(0.0, Math.min(1.0, progress)));
+    }
+    
+    /**
+     * Удаляет BossBar
+     */
+    public void removeBossBar() {
+        if (bossBar != null) {
+            bossBar.removeAll();
+            bossBar = null;
+        }
+    }
+    
+    /**
+     * Добавляет игрока к BossBar
+     */
+    public void addPlayer(@NotNull Player player) {
+        if (bossBar != null && plugin.getConfigManager().isBossBarEnabled()) {
+            bossBar.addPlayer(player);
+        }
+    }
+    
+    /**
+     * Убирает игрока из BossBar
+     */
+    public void removePlayer(@NotNull Player player) {
+        if (bossBar != null) {
+            bossBar.removePlayer(player);
+        }
+    }
+    
+    private String formatTitle(String title, int remaining, int total) {
+        return title
+            .replace("%wave%", String.valueOf(currentWave))
+            .replace("%remaining%", String.valueOf(remaining))
+            .replace("%total%", String.valueOf(total));
+    }
+    
+    private BarColor parseColor(String colorName) {
+        try {
+            return BarColor.valueOf(colorName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("Неверный цвет BossBar: " + colorName + ", используется YELLOW");
+            return BarColor.YELLOW;
+        }
+    }
+    
+    private BarStyle parseStyle(String styleName) {
+        try {
+            return BarStyle.valueOf(styleName.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("Неверный стиль BossBar: " + styleName + ", используется SEGMENTED_10");
+            return BarStyle.SEGMENTED_10;
+        }
+    }
+}

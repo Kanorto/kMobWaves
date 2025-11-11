@@ -108,9 +108,9 @@ public class CommandManager implements CommandExecutor {
                 int currentWave = plugin.getWavesManager().getCurrentWaveNumber();
                 send(sender, plugin.getMessagesManager().info(String.valueOf(remaining), String.valueOf(currentWave)));
                 return true;
-        }
-        send(sender, "§cИспользование: /kmobwaves <reload|start|stop|info|force_start>");
-        return true;
+            default:
+                send(sender, "§cНеизвестная подкоманда. Используйте: /kmobwaves <reload|start|stop|info|force_start>");
+                return true;
     }
 
     // Метод, используемый для отправки сообщения сендеру с использыванием колорайзера

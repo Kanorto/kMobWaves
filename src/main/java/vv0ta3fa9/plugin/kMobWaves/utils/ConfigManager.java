@@ -89,6 +89,90 @@ public class ConfigManager {
     public String getPermissionInfo() {
         return getString("info_command_permission", "kmobwaves.user");
     }
+    
+    public boolean getAutoRestart() {
+        return getBoolean("auto_restart", true);
+    }
+    
+    public int getSpawnRadius() {
+        return config != null ? config.getInt("spawn_radius", 5) : 5;
+    }
+    
+    public double getDefaultHealthMultiplier() {
+        return config != null ? config.getDouble("default_health_multiplier", 1.0) : 1.0;
+    }
+    
+    public boolean isWaveMessagesEnabled() {
+        return getBoolean("wave_messages.enabled", true);
+    }
+    
+    public String getWaveStartMessage() {
+        return getString("wave_messages.start", "&e&l>>> &6Волна %wave% началась! &e&l<<<");
+    }
+    
+    public String getWaveCompleteMessage() {
+        return getString("wave_messages.complete", "&a&l>>> &2Волна %wave% завершена! Следующая волна через %delay% секунд. &a&l<<<");
+    }
+    
+    public String getAllWavesCompleteMessage() {
+        return getString("wave_messages.all_complete", "&6&l>>> Все волны завершены! Перезапуск с первой волны... &6&l<<<");
+    }
+    
+    public boolean isSoundsEnabled() {
+        return getBoolean("sounds.enabled", true);
+    }
+    
+    public String getWaveStartSound() {
+        return getString("sounds.wave_start.sound", "ENTITY_ENDER_DRAGON_GROWL");
+    }
+    
+    public float getWaveStartVolume() {
+        return (float) (config != null ? config.getDouble("sounds.wave_start.volume", 1.0) : 1.0);
+    }
+    
+    public float getWaveStartPitch() {
+        return (float) (config != null ? config.getDouble("sounds.wave_start.pitch", 1.0) : 1.0);
+    }
+    
+    public String getWaveCompleteSound() {
+        return getString("sounds.wave_complete.sound", "UI_TOAST_CHALLENGE_COMPLETE");
+    }
+    
+    public float getWaveCompleteVolume() {
+        return (float) (config != null ? config.getDouble("sounds.wave_complete.volume", 1.0) : 1.0);
+    }
+    
+    public float getWaveCompletePitch() {
+        return (float) (config != null ? config.getDouble("sounds.wave_complete.pitch", 1.0) : 1.0);
+    }
+    
+    public String getMobDeathSound() {
+        return getString("sounds.mob_death.sound", "ENTITY_EXPERIENCE_ORB_PICKUP");
+    }
+    
+    public float getMobDeathVolume() {
+        return (float) (config != null ? config.getDouble("sounds.mob_death.volume", 0.5) : 0.5);
+    }
+    
+    public float getMobDeathPitch() {
+        return (float) (config != null ? config.getDouble("sounds.mob_death.pitch", 1.2) : 1.2);
+    }
+    
+    public boolean isBossBarEnabled() {
+        return getBoolean("bossbar.enabled", true);
+    }
+    
+    public String getBossBarTitle() {
+        return getString("bossbar.title", "&6Волна %wave% &7- &eОсталось: %remaining%/%total%");
+    }
+    
+    public String getBossBarColor() {
+        return getString("bossbar.color", "YELLOW");
+    }
+    
+    public String getBossBarStyle() {
+        return getString("bossbar.style", "SEGMENTED_10");
+    }
 
     public void setupColorizer() {
         COLORIZER = switch (getString("serializer", "LEGACY").toUpperCase()) {
@@ -146,6 +230,9 @@ public class ConfigManager {
                 List<String> coordinatesList = section.getStringList("coordinates");
                 int mobsCount = section.getInt("mobs-count", 10);
                 int exceptions = section.getInt("exceptions", 10);
+                double healthMultiplier = section.getDouble("health-multiplier", getDefaultHealthMultiplier());
+                String customTitle = section.getString("title", null);
+                List<String> rewards = section.getStringList("rewards");
 
                 List<MobSpawnData> mobs = new ArrayList<>();
                 for (String mobData : mobsList) {
@@ -203,7 +290,8 @@ public class ConfigManager {
                     continue;
                 }
                 
-                waves.add(new WaveData(count, mobs, coordinates, mobsCount, exceptions));
+                waves.add(new WaveData(count, mobs, coordinates, mobsCount, exceptions, 
+                                      healthMultiplier, customTitle, rewards));
                 
                 if (getDebug()) {
                     plugin.getLogger().info("Загружена волна #" + count + " с " + mobsCount + " мобами");

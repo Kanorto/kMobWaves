@@ -4,11 +4,16 @@ import io.lumine.mythic.api.mobs.MythicMob;
 import io.lumine.mythic.bukkit.BukkitAdapter;
 import io.lumine.mythic.bukkit.MythicBukkit;
 import io.lumine.mythic.core.mobs.ActiveMob;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vv0ta3fa9.plugin.kMobWaves.KMobWaves;
@@ -21,16 +26,18 @@ public class WavesManager implements Listener {
     
     private final KMobWaves plugin;
     private final Runner runner;
-    private final Map<UUID, WaveData> activeMobs = new ConcurrentHashMap<>  ();
+    private final Map<UUID, WaveData> activeMobs = new ConcurrentHashMap<>();
     private final List<WaveData> waves = new ArrayList<>();
+    private final BossBarManager bossBarManager;
     private int currentWaveIndex = -1;
     private boolean isActive = false;
     private int taskId = -1;
-    private boolean isCheckingCompletion = false; // Флаг для предотвращения множественных проверок
+    private boolean isCheckingCompletion = false;
     
     public WavesManager(@NotNull KMobWaves plugin, @NotNull Runner runner) {
         this.plugin = plugin;
         this.runner = runner;
+        this.bossBarManager = new BossBarManager(plugin);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
     
@@ -115,6 +122,9 @@ public class WavesManager implements Listener {
         currentWaveIndex = -1;
         isCheckingCompletion = false;
         
+        // Удаляем BossBar
+        bossBarManager.removeBossBar();
+        
         if (taskId != -1) {
             runner.run(() -> {
                 plugin.getServer().getScheduler().cancelTask(taskId);
@@ -145,10 +155,21 @@ public class WavesManager implements Listener {
     private void startWave(int waveIndex) {
         if (waveIndex >= waves.size() || waveIndex < 0) {
             if (plugin.getConfigManager().getDebug()) {
-                plugin.getLogger().info("Все волны завершены. Перезапуск с первой волны...");
+                plugin.getLogger().info("Все волны завершены.");
             }
-            currentWaveIndex = 0;
-            startWave(0);
+            
+            // Проверяем настройку auto_restart
+            if (plugin.getConfigManager().getAutoRestart()) {
+                if (plugin.getConfigManager().isWaveMessagesEnabled()) {
+                    String message = plugin.getConfigManager().getAllWavesCompleteMessage();
+                    broadcastMessage(plugin.getConfigManager().COLORIZER.colorize(message));
+                }
+                currentWaveIndex = 0;
+                startWave(0);
+            } else {
+                // Останавливаем волны
+                stopWaves();
+            }
             return;
         }
         
@@ -159,6 +180,23 @@ public class WavesManager implements Listener {
             plugin.getLogger().info("Запуск волны #" + wave.getCount() + " с " + wave.getMobsCount() + " мобами");
         }
         
+        // Отправляем сообщение о начале волны
+        if (plugin.getConfigManager().isWaveMessagesEnabled()) {
+            String message = plugin.getConfigManager().getWaveStartMessage()
+                .replace("%wave%", String.valueOf(wave.getCount()));
+            broadcastMessage(plugin.getConfigManager().COLORIZER.colorize(message));
+        }
+        
+        // Воспроизводим звук начала волны
+        if (plugin.getConfigManager().isSoundsEnabled()) {
+            playSound(plugin.getConfigManager().getWaveStartSound(),
+                     plugin.getConfigManager().getWaveStartVolume(),
+                     plugin.getConfigManager().getWaveStartPitch());
+        }
+        
+        // Создаем BossBar
+        bossBarManager.createBossBar(wave.getCount(), wave.getMobsCount(), wave.getCustomTitle());
+        
         runner.run(() -> spawnWaveMobs(wave));
     }
 
@@ -166,6 +204,7 @@ public class WavesManager implements Listener {
         List<Location> coordinates = wave.getCoordinates();
         List<MobSpawnData> mobsData = wave.getMobs();
         int mobsCount = wave.getMobsCount();
+        int spawnRadius = plugin.getConfigManager().getSpawnRadius();
         
         if (coordinates.isEmpty() || mobsData.isEmpty()) {
             plugin.getLogger().warning("Волна #" + wave.getCount() + " имеет пустые данные!");
@@ -182,7 +221,15 @@ public class WavesManager implements Listener {
         int spawned = 0;
         
         for (int i = 0; i < mobsCount; i++) {
-            Location spawnLoc = coordinates.get(random.nextInt(coordinates.size()));
+            Location baseLocation = coordinates.get(random.nextInt(coordinates.size()));
+            
+            // Применяем случайный разброс в радиусе spawn_radius
+            Location spawnLoc = baseLocation.clone();
+            if (spawnRadius > 0) {
+                double offsetX = (random.nextDouble() * 2 - 1) * spawnRadius;
+                double offsetZ = (random.nextDouble() * 2 - 1) * spawnRadius;
+                spawnLoc.add(offsetX, 0, offsetZ);
+            }
 
             MobSpawnData selectedMob = selectMobByChance(mobsData, random, totalChance);
             
@@ -244,6 +291,21 @@ public class WavesManager implements Listener {
             Entity entity = spawned.getEntity().getBukkitEntity();
             
             if (entity != null) {
+                // Применяем множитель здоровья
+                if (entity instanceof LivingEntity) {
+                    LivingEntity livingEntity = (LivingEntity) entity;
+                    double healthMultiplier = wave.getHealthMultiplier();
+                    if (healthMultiplier != 1.0) {
+                        double newMaxHealth = livingEntity.getMaxHealth() * healthMultiplier;
+                        livingEntity.setMaxHealth(newMaxHealth);
+                        livingEntity.setHealth(newMaxHealth);
+                        
+                        if (plugin.getConfigManager().getDebug()) {
+                            plugin.getLogger().info("Применен множитель здоровья " + healthMultiplier + " к мобу " + mobName);
+                        }
+                    }
+                }
+                
                 activeMobs.put(entity.getUniqueId(), wave);
                 
                 if (plugin.getConfigManager().getDebug()) {
@@ -270,11 +332,29 @@ public class WavesManager implements Listener {
         if (activeMobs.containsKey(entityId)) {
             activeMobs.remove(entityId);
             
+            // Воспроизводим звук смерти моба
+            if (plugin.getConfigManager().isSoundsEnabled()) {
+                Location loc = event.getEntity().getLocation();
+                playSound(plugin.getConfigManager().getMobDeathSound(),
+                         plugin.getConfigManager().getMobDeathVolume(),
+                         plugin.getConfigManager().getMobDeathPitch());
+            }
+            
+            // Обновляем BossBar
+            bossBarManager.updateProgress(activeMobs.size());
+            
             if (plugin.getConfigManager().getDebug()) {
                 plugin.getLogger().info("Моб убит. Осталось: " + activeMobs.size());
             }
 
             runner.run(() -> checkWaveCompletion());
+        }
+    }
+    
+    @EventHandler
+    public void onPlayerJoin(@NotNull PlayerJoinEvent event) {
+        if (isActive) {
+            bossBarManager.addPlayer(event.getPlayer());
         }
     }
     
@@ -302,6 +382,25 @@ public class WavesManager implements Listener {
             plugin.getLogger().info("Волна #" + currentWave.getCount() + " завершена. " +
                     "Следующая волна через " + currentWave.getExceptions() + " секунд");
         }
+        
+        // Отправляем сообщение о завершении волны
+        if (plugin.getConfigManager().isWaveMessagesEnabled()) {
+            String message = plugin.getConfigManager().getWaveCompleteMessage()
+                .replace("%wave%", String.valueOf(currentWave.getCount()))
+                .replace("%delay%", String.valueOf(currentWave.getExceptions()))
+                .replace("%next_wave%", String.valueOf(currentWave.getCount() + 1));
+            broadcastMessage(plugin.getConfigManager().COLORIZER.colorize(message));
+        }
+        
+        // Воспроизводим звук завершения волны
+        if (plugin.getConfigManager().isSoundsEnabled()) {
+            playSound(plugin.getConfigManager().getWaveCompleteSound(),
+                     plugin.getConfigManager().getWaveCompleteVolume(),
+                     plugin.getConfigManager().getWaveCompletePitch());
+        }
+        
+        // Выполняем команды-награды
+        executeRewards(currentWave.getRewards());
 
         int delayTicks = currentWave.getExceptions() * 20;
         
@@ -350,5 +449,51 @@ public class WavesManager implements Listener {
             return -1;
         }
         return waves.get(currentWaveIndex).getCount();
+    }
+    
+    /**
+     * Воспроизводит звук для всех онлайн игроков
+     */
+    private void playSound(String soundName, float volume, float pitch) {
+        try {
+            Sound sound = Sound.valueOf(soundName.toUpperCase());
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                player.playSound(player.getLocation(), sound, volume, pitch);
+            }
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("Неверное название звука: " + soundName);
+        }
+    }
+    
+    /**
+     * Отправляет сообщение всем онлайн игрокам
+     */
+    private void broadcastMessage(String message) {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.sendMessage(message);
+        }
+    }
+    
+    /**
+     * Выполняет команды-награды
+     */
+    private void executeRewards(List<String> rewards) {
+        if (rewards.isEmpty()) {
+            return;
+        }
+        
+        for (String command : rewards) {
+            try {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+                if (plugin.getConfigManager().getDebug()) {
+                    plugin.getLogger().info("Выполнена команда-награда: " + command);
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("Ошибка при выполнении команды-награды: " + command);
+                if (plugin.getConfigManager().getDebug()) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 }
