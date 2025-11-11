@@ -165,14 +165,18 @@ sounds:
 
 ## Настройка BossBar
 
-### bossbar.enabled
+### bossbar.mode
 ```yaml
 bossbar:
-  enabled: true
+  mode: "ALL"
 ```
-- **Тип**: boolean
-- **По умолчанию**: true
-- **Описание**: Включает/выключает отображение BossBar
+- **Тип**: string
+- **По умолчанию**: ALL
+- **Варианты**: 
+  - `ALL` - показывать BossBar всем игрокам
+  - `ADMIN` - показывать только игрокам с правом `kmobwaves.bossbar`
+  - `NONE` - отключить BossBar
+- **Описание**: Режим отображения BossBar. Позволяет показывать прогресс только администраторам или отключить полностью.
 
 ### bossbar.title
 ```yaml
@@ -428,7 +432,8 @@ Waves:
 - Проверьте логи с `debug: true`
 
 ### BossBar не отображается
-- Убедитесь что `bossbar.enabled: true`
+- Убедитесь что `bossbar.mode` не установлен в `NONE`
+- Если режим `ADMIN`, проверьте что у игрока есть право `kmobwaves.bossbar`
 - Проверьте правильность color и style
 - Игроки должны быть онлайн при старте волны
 

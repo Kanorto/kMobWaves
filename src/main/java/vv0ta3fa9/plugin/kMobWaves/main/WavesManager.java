@@ -182,20 +182,41 @@ public class WavesManager implements Listener {
         
         // Отправляем сообщение о начале волны
         if (plugin.getConfigManager().isWaveMessagesEnabled()) {
-            String message = plugin.getConfigManager().getWaveStartMessage()
-                .replace("%wave%", String.valueOf(wave.getCount()));
-            broadcastMessage(plugin.getConfigManager().COLORIZER.colorize(message));
+            try {
+                String message = plugin.getConfigManager().getWaveStartMessage()
+                    .replace("%wave%", String.valueOf(wave.getCount()));
+                broadcastMessage(plugin.getConfigManager().COLORIZER.colorize(message));
+            } catch (Exception e) {
+                plugin.getLogger().warning("Ошибка при отправке сообщения о начале волны: " + e.getMessage());
+                if (plugin.getConfigManager().getDebug()) {
+                    e.printStackTrace();
+                }
+            }
         }
         
         // Воспроизводим звук начала волны
         if (plugin.getConfigManager().isSoundsEnabled()) {
-            playSound(plugin.getConfigManager().getWaveStartSound(),
-                     plugin.getConfigManager().getWaveStartVolume(),
-                     plugin.getConfigManager().getWaveStartPitch());
+            try {
+                playSound(plugin.getConfigManager().getWaveStartSound(),
+                         plugin.getConfigManager().getWaveStartVolume(),
+                         plugin.getConfigManager().getWaveStartPitch());
+            } catch (Exception e) {
+                plugin.getLogger().warning("Ошибка при воспроизведении звука начала волны: " + e.getMessage());
+                if (plugin.getConfigManager().getDebug()) {
+                    e.printStackTrace();
+                }
+            }
         }
         
         // Создаем BossBar
-        bossBarManager.createBossBar(wave.getCount(), wave.getMobsCount(), wave.getCustomTitle());
+        try {
+            bossBarManager.createBossBar(wave.getCount(), wave.getMobsCount(), wave.getCustomTitle());
+        } catch (Exception e) {
+            plugin.getLogger().warning("Ошибка при создании BossBar: " + e.getMessage());
+            if (plugin.getConfigManager().getDebug()) {
+                e.printStackTrace();
+            }
+        }
         
         runner.run(() -> spawnWaveMobs(wave));
     }
@@ -328,33 +349,57 @@ public class WavesManager implements Listener {
             return;
         }
         
-        UUID entityId = event.getEntity().getUniqueId();
-        if (activeMobs.containsKey(entityId)) {
-            activeMobs.remove(entityId);
-            
-            // Воспроизводим звук смерти моба
-            if (plugin.getConfigManager().isSoundsEnabled()) {
-                Location loc = event.getEntity().getLocation();
-                playSound(plugin.getConfigManager().getMobDeathSound(),
-                         plugin.getConfigManager().getMobDeathVolume(),
-                         plugin.getConfigManager().getMobDeathPitch());
-            }
-            
-            // Обновляем BossBar
-            bossBarManager.updateProgress(activeMobs.size());
-            
-            if (plugin.getConfigManager().getDebug()) {
-                plugin.getLogger().info("Моб убит. Осталось: " + activeMobs.size());
-            }
+        try {
+            UUID entityId = event.getEntity().getUniqueId();
+            if (activeMobs.containsKey(entityId)) {
+                activeMobs.remove(entityId);
+                
+                // Воспроизводим звук смерти моба
+                if (plugin.getConfigManager().isSoundsEnabled()) {
+                    try {
+                        playSound(plugin.getConfigManager().getMobDeathSound(),
+                                 plugin.getConfigManager().getMobDeathVolume(),
+                                 plugin.getConfigManager().getMobDeathPitch());
+                    } catch (Exception e) {
+                        if (plugin.getConfigManager().getDebug()) {
+                            plugin.getLogger().warning("Ошибка при воспроизведении звука смерти моба: " + e.getMessage());
+                        }
+                    }
+                }
+                
+                // Обновляем BossBar
+                try {
+                    bossBarManager.updateProgress(activeMobs.size());
+                } catch (Exception e) {
+                    if (plugin.getConfigManager().getDebug()) {
+                        plugin.getLogger().warning("Ошибка при обновлении BossBar: " + e.getMessage());
+                    }
+                }
+                
+                if (plugin.getConfigManager().getDebug()) {
+                    plugin.getLogger().info("Моб убит. Осталось: " + activeMobs.size());
+                }
 
-            runner.run(() -> checkWaveCompletion());
+                runner.run(() -> checkWaveCompletion());
+            }
+        } catch (Exception e) {
+            plugin.getLogger().severe("Ошибка при обработке смерти моба: " + e.getMessage());
+            if (plugin.getConfigManager().getDebug()) {
+                e.printStackTrace();
+            }
         }
     }
     
     @EventHandler
     public void onPlayerJoin(@NotNull PlayerJoinEvent event) {
         if (isActive) {
-            bossBarManager.addPlayer(event.getPlayer());
+            try {
+                bossBarManager.addPlayer(event.getPlayer());
+            } catch (Exception e) {
+                if (plugin.getConfigManager().getDebug()) {
+                    plugin.getLogger().warning("Ошибка при добавлении игрока к BossBar: " + e.getMessage());
+                }
+            }
         }
     }
     
@@ -449,6 +494,24 @@ public class WavesManager implements Listener {
             return -1;
         }
         return waves.get(currentWaveIndex).getCount();
+    }
+    
+    /**
+     * Получает список активных мобов волны
+     * @return список активных сущностей мобов
+     */
+    @NotNull
+    public List<Entity> getActiveMobEntities() {
+        List<Entity> entities = new ArrayList<>();
+        
+        for (UUID mobId : activeMobs.keySet()) {
+            Entity entity = plugin.getServer().getEntity(mobId);
+            if (entity != null && !entity.isDead()) {
+                entities.add(entity);
+            }
+        }
+        
+        return entities;
     }
     
     /**

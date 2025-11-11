@@ -91,7 +91,7 @@ sounds:
 
 # BossBar для отображения прогресса волны
 bossbar:
-  enabled: true
+  mode: "ALL"  # ALL - всем, ADMIN - только администраторам, NONE - отключить
   title: "&6Волна %wave% &7- &eОсталось: %remaining%/%total%"
   color: "YELLOW"  # BLUE, GREEN, PINK, PURPLE, RED, WHITE, YELLOW
   style: "SEGMENTED_10"  # SOLID, SEGMENTED_6, SEGMENTED_10, SEGMENTED_12, SEGMENTED_20
@@ -174,6 +174,7 @@ another:
 | `force_start <номер>`<br/>`forcestart <номер>` | Запускает волны с указанной волны | `kmobwaves.admin` | `/kmobwaves force_start 3` или `/kmw forcestart 3` |
 | `stop` | Останавливает все активные волны | `kmobwaves.admin` | `/kmobwaves stop` или `/kmw stop` |
 | `info` | Показывает количество оставшихся мобов и текущую волну | `kmobwaves.user` | `/kmobwaves info` или `/kmw info` |
+| `highlight` | Подсвечивает оставшихся мобов волны на 10 секунд | `kmobwaves.highlight` | `/kmobwaves highlight` или `/kmw highlight` |
 | `reload` | Перезагружает плагин | `kmobwaves.admin` | `/kmobwaves reload` или `/kmw reload` |
 
 ### Примеры использования
@@ -183,6 +184,7 @@ another:
 /kmobwaves force_start 3      # Запустить с третьей волны
 /kmobwaves stop               # Остановить волны
 /kmobwaves info               # Проверить статус
+/kmobwaves highlight          # Подсветить оставшихся мобов
 /kmobwaves reload             # Перезагрузить плагин
 ```
 
@@ -194,6 +196,8 @@ another:
 |------------|----------|
 | `kmobwaves.admin` | Полный доступ ко всем командам (start, stop, reload, force_start) |
 | `kmobwaves.user` | Доступ только к команде info |
+| `kmobwaves.highlight` | Доступ к команде highlight для подсветки мобов |
+| `kmobwaves.bossbar` | Видеть BossBar в режиме ADMIN |
 
 ## Как это работает
 

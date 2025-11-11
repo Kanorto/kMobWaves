@@ -159,7 +159,12 @@ public class ConfigManager {
     }
     
     public boolean isBossBarEnabled() {
-        return getBoolean("bossbar.enabled", true);
+        String mode = getBossBarMode();
+        return !"NONE".equalsIgnoreCase(mode);
+    }
+    
+    public String getBossBarMode() {
+        return getString("bossbar.mode", "ALL").toUpperCase();
     }
     
     public String getBossBarTitle() {

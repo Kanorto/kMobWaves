@@ -11,6 +11,6 @@ softdepend:
 commands:
   kmobwaves:
     description: Главная команда управления kMobWaves
-    usage: /kmobwaves <reload|start|stop|info|force_start>
+    usage: /kmobwaves <reload|start|stop|info|force_start|highlight>
     aliases:
       - kmw

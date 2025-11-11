@@ -55,7 +55,11 @@ sounds:
 
 # BossBar для отображения прогресса волны
 bossbar:
-  enabled: true
+  # Режим отображения BossBar:
+  # ALL - показывать всем игрокам
+  # ADMIN - показывать только администраторам с правом kmobwaves.bossbar
+  # NONE - отключить BossBar
+  mode: "ALL"
   # Текст BossBar (плейсхолдеры: %wave%, %remaining%, %total%)
   title: "&6Волна %wave% &7- &eОсталось: %remaining%/%total%"
   # Цвет: BLUE, GREEN, PINK, PURPLE, RED, WHITE, YELLOW

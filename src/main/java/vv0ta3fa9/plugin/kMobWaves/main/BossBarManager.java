@@ -45,9 +45,27 @@ public class BossBarManager {
         bossBar = Bukkit.createBossBar(title, color, style);
         bossBar.setProgress(1.0);
         
-        // Добавляем всех онлайн игроков
+        // Добавляем игроков в зависимости от режима
+        String mode = plugin.getConfigManager().getBossBarMode();
         for (Player player : Bukkit.getOnlinePlayers()) {
-            bossBar.addPlayer(player);
+            if (shouldShowBossBar(player, mode)) {
+                bossBar.addPlayer(player);
+            }
+        }
+    }
+    
+    /**
+     * Проверяет, должен ли игрок видеть BossBar
+     */
+    private boolean shouldShowBossBar(@NotNull Player player, @NotNull String mode) {
+        switch (mode.toUpperCase()) {
+            case "ALL":
+                return true;
+            case "ADMIN":
+                return player.hasPermission("kmobwaves.bossbar");
+            case "NONE":
+            default:
+                return false;
         }
     }
     
@@ -84,7 +102,10 @@ public class BossBarManager {
      */
     public void addPlayer(@NotNull Player player) {
         if (bossBar != null && plugin.getConfigManager().isBossBarEnabled()) {
-            bossBar.addPlayer(player);
+            String mode = plugin.getConfigManager().getBossBarMode();
+            if (shouldShowBossBar(player, mode)) {
+                bossBar.addPlayer(player);
+            }
         }
     }
     
