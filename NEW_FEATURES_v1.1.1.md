@@ -45,6 +45,8 @@ bossbar:
 
 **Функциональность**:
 - Делает всех оставшихся мобов волны светящимися (glowing effect)
+- **ВАЖНО: Подсветка видна ТОЛЬКО игроку, который использовал команду**
+- Другие игроки не видят эффект свечения
 - Подсветка держится 10 секунд, затем автоматически убирается
 - Помогает найти застрявших или спрятавшихся мобов
 - Требует право `kmobwaves.highlight`
@@ -53,7 +55,7 @@ bossbar:
 **Пример использования**:
 ```
 /kmobwaves highlight
-# → Подсвечено 5 мобов! Подсветка автоматически исчезнет через 10 секунд.
+# → Подсвечено 5 мобов! Только вы видите подсветку. Она исчезнет через 10 секунд.
 ```
 
 **Сообщения об ошибках**:
@@ -64,17 +66,22 @@ bossbar:
 
 **Техническая реализация**:
 ```java
-// Подсветка мобов
+// Создаем уникальную scoreboard команду для игрока
+String teamName = "kmw_glow_" + player.getName();
+Scoreboard scoreboard = player.getScoreboard();
+Team team = scoreboard.registerNewTeam(teamName);
+team.setColor(ChatColor.YELLOW);
+
+// Добавляем мобов в команду - это делает их видимыми только для этого игрока
 for (Entity mob : mobs) {
-    mob.setGlowing(true);
+    team.addEntry(mob.getUniqueId().toString());
 }
 
 // Автоматическое снятие через 10 секунд
 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-    for (Entity mob : mobs) {
-        if (mob != null && !mob.isDead()) {
-            mob.setGlowing(false);
-        }
+    Team removeTeam = scoreboard.getTeam(teamName);
+    if (removeTeam != null) {
+        removeTeam.unregister();
     }
 }, 200L); // 200 ticks = 10 seconds
 ```
@@ -132,13 +139,15 @@ try {
 
 #### Highlight Command
 ```java
-try {
-    for (Entity mob : mobs) {
-        mob.setGlowing(true);
-    }
-} catch (Exception e) {
-    send(sender, "§cОшибка при подсветке мобов: " + e.getMessage());
-    if (debug) e.printStackTrace();
+// Создаем персональную команду для игрока
+String teamName = "kmw_glow_" + player.getName();
+Scoreboard scoreboard = player.getScoreboard();
+Team team = scoreboard.registerNewTeam(teamName);
+team.setColor(ChatColor.YELLOW);
+
+// Добавляем мобов - видны только этому игроку
+for (Entity mob : mobs) {
+    team.addEntry(mob.getUniqueId().toString());
 }
 ```
 

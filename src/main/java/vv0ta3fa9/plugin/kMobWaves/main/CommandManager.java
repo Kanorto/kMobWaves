@@ -1,11 +1,14 @@
 package vv0ta3fa9.plugin.kMobWaves.main;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 import vv0ta3fa9.plugin.kMobWaves.KMobWaves;
 import vv0ta3fa9.plugin.kMobWaves.utils.Runner.Runner;
 
@@ -135,22 +138,40 @@ public class CommandManager implements CommandExecutor {
                 }
                 
                 try {
-                    for (Entity mob : mobs) {
-                        mob.setGlowing(true);
+                    // Создаем уникальную команду для каждого игрока
+                    String teamName = "kmw_glow_" + player.getName();
+                    Scoreboard scoreboard = player.getScoreboard();
+                    
+                    // Удаляем старую команду если существует
+                    Team oldTeam = scoreboard.getTeam(teamName);
+                    if (oldTeam != null) {
+                        oldTeam.unregister();
                     }
-                    send(sender, "§aПодсвечено " + mobs.size() + " мобов! Подсветка автоматически исчезнет через 10 секунд.");
+                    
+                    // Создаем новую команду с эффектом свечения
+                    Team team = scoreboard.registerNewTeam(teamName);
+                    team.setColor(ChatColor.YELLOW);
+                    team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
+                    
+                    // Добавляем мобов в команду (это делает их светящимися для игрока)
+                    for (Entity mob : mobs) {
+                        if (mob != null && !mob.isDead()) {
+                            team.addEntry(mob.getUniqueId().toString());
+                        }
+                    }
+                    
+                    send(sender, "§aПодсвечено " + mobs.size() + " мобов! Только вы видите подсветку. Она исчезнет через 10 секунд.");
                     
                     // Убираем подсветку через 10 секунд
                     Bukkit.getScheduler().runTaskLater(plugin, () -> {
                         try {
-                            for (Entity mob : mobs) {
-                                if (mob != null && !mob.isDead()) {
-                                    mob.setGlowing(false);
-                                }
+                            Team removeTeam = scoreboard.getTeam(teamName);
+                            if (removeTeam != null) {
+                                removeTeam.unregister();
                             }
                         } catch (Exception e) {
                             if (plugin.getConfigManager().getDebug()) {
-                                plugin.getLogger().warning("Ошибка при снятии подсветки мобов: " + e.getMessage());
+                                plugin.getLogger().warning("Ошибка при снятии подсветки мобов для " + player.getName() + ": " + e.getMessage());
                             }
                         }
                     }, 200L); // 10 seconds = 200 ticks
