@@ -1,0 +1,16 @@
+name: kMobWaves
+version: '1.0'
+main: vv0ta3fa9.plugin.kMobWaves.KMobWaves
+api-version: '1.21'
+authors: [ vv0t3afa9 ]
+website: t.me/kapybarkaaa
+depend:
+  - MythicMobs
+softdepend:
+  - PlaceholderAPI
+commands:
+  kmobwaves:
+    description: Главная команда управления kMobWaves
+    usage: /kmobwaves <reload|start|stop|info|force_start>
+    aliases:
+      - kmw
