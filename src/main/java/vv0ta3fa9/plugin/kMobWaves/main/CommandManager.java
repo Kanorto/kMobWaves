@@ -186,6 +186,7 @@ public class CommandManager implements CommandExecutor {
             default:
                 send(sender, "§cНеизвестная подкоманда. Используйте: /kmobwaves <reload|start|stop|info|force_start|highlight>");
                 return true;
+        }
     }
 
     // Метод, используемый для отправки сообщения сендеру с использыванием колорайзера

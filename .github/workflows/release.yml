@@ -20,17 +20,19 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
-        cache: maven
         
     - name: Get version from tag
       id: version
       run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
       
-    - name: Update pom.xml version
-      run: mvn versions:set -DnewVersion=${{ steps.version.outputs.VERSION }} --batch-mode
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
       
-    - name: Build with Maven
-      run: mvn clean package --batch-mode
+    - name: Update version in build.gradle
+      run: sed -i "s/^version = .*/version = '${{ steps.version.outputs.VERSION }}'/" build.gradle
+      
+    - name: Build with Gradle
+      run: ./gradlew clean build --no-daemon
       
     - name: Generate release notes
       id: release_notes
@@ -39,6 +41,8 @@ jobs:
         echo "" >> release_notes.md
         echo "### Features" >> release_notes.md
         echo "- Enhanced configuration system" >> release_notes.md
+        echo "- BossBar modes (ALL, ADMIN, NONE)" >> release_notes.md
+        echo "- Highlight command for administrators" >> release_notes.md
         echo "- Improved wave management" >> release_notes.md
         echo "" >> release_notes.md
         echo "### Installation" >> release_notes.md
@@ -51,11 +55,14 @@ jobs:
         echo "- Minecraft 1.21+" >> release_notes.md
         echo "- Paper or forks" >> release_notes.md
         echo "- MythicMobs 5.6.1+" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "### Build System" >> release_notes.md
+        echo "Built with Gradle (Gradle wrapper included for easy building)" >> release_notes.md
         
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
-        files: target/kMobWaves-*.jar
+        files: build/libs/*.jar
         body_path: release_notes.md
         draft: false
         prerelease: false

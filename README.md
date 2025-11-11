@@ -31,6 +31,17 @@
 
 ### Сборка из исходников
 
+#### С помощью Gradle (рекомендуется)
+
+```bash
+git clone https://github.com/Kanorto/kMobWaves.git
+cd kMobWaves
+./gradlew clean build
+# Готовый JAR будет в build/libs/kMobWaves-X.X.X.jar
+```
+
+#### С помощью Maven (альтернатива)
+
 ```bash
 git clone https://github.com/Kanorto/kMobWaves.git
 cd kMobWaves
