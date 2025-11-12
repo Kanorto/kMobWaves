@@ -17,7 +17,8 @@ Received status code 403 from server: Forbidden
 - ProtocolLib changed its Maven groupId from `com.comphenix.protocol` to `net.dmulloy2`
 - Version 5.4.0 is published to Maven Central (no special repository needed)
 - The old repository `https://repo.dmulloy2.net/repository/public/` was returning 403 errors
-- Package names remain `com.comphenix.protocol.*` so no code changes were required
+- Package names remain `com.comphenix.protocol.*` so most code unchanged
+- **Updated code**: Changed `getWatchableObjects()` to `asMap().values()` in GlowingManager to match ProtocolLib 5.4.0 API
 
 **Verification:**
 ```bash

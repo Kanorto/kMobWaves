@@ -100,7 +100,7 @@ public class GlowingManager {
                     // Создаем список значений для пакета из ОБНОВЛЕННОГО watcher
                     // После setObject нужно получать данные из модифицированного watcher
                     List<WrappedDataValue> wrappedDataValueList = new ArrayList<>();
-                    for (WrappedDataWatcher.WrappedWatchableObject entry : watcher.getWatchableObjects()) {
+                    for (WrappedDataWatcher.WrappedWatchableObject entry : watcher.asMap().values()) {
                         if (entry == null) continue;
                         WrappedDataValue wrappedDataValue = new WrappedDataValue(
                             entry.getIndex(),
@@ -189,7 +189,7 @@ public class GlowingManager {
                     // Создаем список значений для пакета из ОБНОВЛЕННОГО watcher
                     // После setObject нужно получать данные из модифицированного watcher
                     List<WrappedDataValue> wrappedDataValueList = new ArrayList<>();
-                    for (WrappedDataWatcher.WrappedWatchableObject entry : watcher.getWatchableObjects()) {
+                    for (WrappedDataWatcher.WrappedWatchableObject entry : watcher.asMap().values()) {
                         if (entry == null) continue;
                         WrappedDataValue wrappedDataValue = new WrappedDataValue(
                             entry.getIndex(),
