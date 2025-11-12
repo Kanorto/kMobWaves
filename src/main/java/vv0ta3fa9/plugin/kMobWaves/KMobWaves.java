@@ -78,9 +78,7 @@ public final class KMobWaves extends JavaPlugin {
      */
     public void reloadPluginConfig() {
         try {
-            // Reload configuration files
-            configManager.reloadConfig();
-            configManager.setupColorizer();
+            // Reload messages configuration
             messagesManager.reloadMessages();
             
             // If waves are active, stop them before reloading
@@ -90,8 +88,9 @@ public final class KMobWaves extends JavaPlugin {
                 getLogger().info("Остановлены активные волны для перезагрузки конфигурации");
             }
             
-            // Reload waves configuration
+            // Reload waves configuration (this also reloads config.yml and colorizer)
             wavesManager.loadWaves();
+            configManager.setupColorizer();
             
             getLogger().info("Конфигурация успешно перезагружена");
         } catch (Exception e) {

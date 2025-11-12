@@ -24,7 +24,7 @@ public class MessagesManager {
         if (!messagesConfigFile.exists()) {
             plugin.saveResource("messages.yml", false);
         }
-        messagesconfig = YamlConfiguration.loadConfiguration(messagesConfigFile);
+        reloadMessages();
     }
     
     /**
