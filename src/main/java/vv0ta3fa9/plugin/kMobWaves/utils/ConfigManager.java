@@ -183,6 +183,10 @@ public class ConfigManager {
     public String getBossBarStyle() {
         return getString("bossbar.style", "SEGMENTED_10");
     }
+    
+    public String getHighlightMode() {
+        return getString("highlight.mode", "ADMIN").toUpperCase();
+    }
 
     public void setupColorizer() {
         COLORIZER = switch (getString("serializer", "LEGACY").toUpperCase()) {

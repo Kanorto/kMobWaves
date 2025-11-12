@@ -115,10 +115,23 @@ public class CommandManager implements CommandExecutor {
                 send(sender, plugin.getMessagesManager().info(String.valueOf(remaining), String.valueOf(currentWave)));
                 return true;
             case "highlight":
-                if (!sender.hasPermission("kmobwaves.highlight")) {
-                    send(sender, plugin.getMessagesManager().nopermission());
-                    return true;
+                // Проверяем режим подсветки из конфига
+                String highlightMode = plugin.getConfigManager().getHighlightMode();
+                
+                // В режиме ADMIN требуется право kmobwaves.admin
+                // В режиме ALL требуется право kmobwaves.highlight
+                if ("ADMIN".equalsIgnoreCase(highlightMode)) {
+                    if (!sender.hasPermission("kmobwaves.admin")) {
+                        send(sender, plugin.getMessagesManager().nopermission());
+                        return true;
+                    }
+                } else {
+                    if (!sender.hasPermission("kmobwaves.highlight")) {
+                        send(sender, plugin.getMessagesManager().nopermission());
+                        return true;
+                    }
                 }
+                
                 if (!(sender instanceof Player)) {
                     send(sender, plugin.getMessagesManager().playeronly());
                     return true;
@@ -137,26 +150,32 @@ public class CommandManager implements CommandExecutor {
                 }
                 
                 try {
-                    // Применяем эффект свечения напрямую к мобам
-                    int highlighted = 0;
-                    for (Entity mob : mobs) {
-                        if (mob != null && !mob.isDead()) {
-                            mob.setGlowing(true);
-                            highlighted++;
-                        }
+                    // Определяем, для кого видна подсветка
+                    Player viewer = null;
+                    String visibilityMessage;
+                    
+                    if ("ADMIN".equalsIgnoreCase(highlightMode) && plugin.getGlowingManager().isProtocolLibAvailable()) {
+                        // В режиме ADMIN с ProtocolLib подсветка видна только администратору
+                        viewer = player;
+                        visibilityMessage = plugin.getMessagesManager().highlightVisibilityAdmin();
+                    } else {
+                        // В режиме ALL или без ProtocolLib подсветка видна всем
+                        viewer = null;
+                        visibilityMessage = plugin.getMessagesManager().highlightVisibilityAll();
                     }
                     
-                    send(sender, "§aПодсвечено " + highlighted + " мобов! Подсветка исчезнет через 10 секунд.");
+                    // Применяем подсветку через GlowingManager
+                    int highlighted = plugin.getGlowingManager().applyGlowing(mobs, viewer);
+                    
+                    send(sender, plugin.getMessagesManager().highlightSuccess(highlighted, visibilityMessage));
                     
                     // Сохраняем список мобов и убираем подсветку через 10 секунд
                     final List<Entity> glowingMobs = new ArrayList<>(mobs);
+                    final Player finalViewer = viewer;
+                    
                     int taskId = Bukkit.getScheduler().runTaskLater(plugin, () -> {
                         try {
-                            for (Entity mob : glowingMobs) {
-                                if (mob != null && !mob.isDead()) {
-                                    mob.setGlowing(false);
-                                }
-                            }
+                            plugin.getGlowingManager().removeGlowing(glowingMobs, finalViewer);
                         } catch (Exception e) {
                             if (plugin.getConfigManager().getDebug()) {
                                 plugin.getLogger().warning("Ошибка при снятии подсветки мобов: " + e.getMessage());
