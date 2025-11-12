@@ -100,9 +100,13 @@ public class GlowingManager {
                     // Создаем список значений для пакета из ОБНОВЛЕННОГО watcher
                     // После setObject нужно получать данные из модифицированного watcher
                     List<WrappedDataValue> wrappedDataValueList = new ArrayList<>();
-                    for (WrappedDataValue entry : watcher.getWatchableObjects()) {
-                        if (entry == null) continue;
-                        wrappedDataValueList.add(entry);
+                    for (var watchableObject : watcher.getWatchableObjects()) {
+                        if (watchableObject == null) continue;
+                        wrappedDataValueList.add(new WrappedDataValue(
+                            watchableObject.getIndex(),
+                            watchableObject.getSerializer(),
+                            watchableObject.getRawValue()
+                        ));
                     }
                     
                     packet.getDataValueCollectionModifier().write(0, wrappedDataValueList);
@@ -184,9 +188,13 @@ public class GlowingManager {
                     // Создаем список значений для пакета из ОБНОВЛЕННОГО watcher
                     // После setObject нужно получать данные из модифицированного watcher
                     List<WrappedDataValue> wrappedDataValueList = new ArrayList<>();
-                    for (WrappedDataValue entry : watcher.getWatchableObjects()) {
-                        if (entry == null) continue;
-                        wrappedDataValueList.add(entry);
+                    for (var watchableObject : watcher.getWatchableObjects()) {
+                        if (watchableObject == null) continue;
+                        wrappedDataValueList.add(new WrappedDataValue(
+                            watchableObject.getIndex(),
+                            watchableObject.getSerializer(),
+                            watchableObject.getRawValue()
+                        ));
                     }
                     
                     packet.getDataValueCollectionModifier().write(0, wrappedDataValueList);
