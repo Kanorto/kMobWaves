@@ -501,6 +501,7 @@ public class WavesManager implements Listener {
      */
     public int getRemainingMobsCount() {
         // Очищаем мертвых мобов синхронно
+        int sizeBefore = activeMobs.size();
         Iterator<UUID> iterator = activeMobs.keySet().iterator();
         while (iterator.hasNext()) {
             UUID mobId = iterator.next();
@@ -510,7 +511,19 @@ public class WavesManager implements Listener {
             }
         }
         
-        return activeMobs.size();
+        // Обновляем BossBar если количество изменилось
+        int sizeAfter = activeMobs.size();
+        if (sizeBefore != sizeAfter && isActive) {
+            try {
+                bossBarManager.updateProgress(sizeAfter);
+            } catch (Exception e) {
+                if (plugin.getConfigManager().getDebug()) {
+                    plugin.getLogger().warning("Ошибка при обновлении BossBar после очистки: " + e.getMessage());
+                }
+            }
+        }
+        
+        return sizeAfter;
     }
     
     /**
@@ -540,6 +553,7 @@ public class WavesManager implements Listener {
         List<Entity> entities = new ArrayList<>();
         
         // Clean up dead entities while iterating
+        int sizeBefore = activeMobs.size();
         Iterator<UUID> iterator = activeMobs.keySet().iterator();
         while (iterator.hasNext()) {
             UUID mobId = iterator.next();
@@ -549,6 +563,18 @@ public class WavesManager implements Listener {
             } else {
                 // Remove dead or unloaded entities
                 iterator.remove();
+            }
+        }
+        
+        // Обновляем BossBar если количество изменилось
+        int sizeAfter = activeMobs.size();
+        if (sizeBefore != sizeAfter && isActive) {
+            try {
+                bossBarManager.updateProgress(sizeAfter);
+            } catch (Exception e) {
+                if (plugin.getConfigManager().getDebug()) {
+                    plugin.getLogger().warning("Ошибка при обновлении BossBar после очистки: " + e.getMessage());
+                }
             }
         }
         
