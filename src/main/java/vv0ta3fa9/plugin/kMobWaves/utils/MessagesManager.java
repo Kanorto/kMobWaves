@@ -24,7 +24,21 @@ public class MessagesManager {
         if (!messagesConfigFile.exists()) {
             plugin.saveResource("messages.yml", false);
         }
-        messagesconfig = YamlConfiguration.loadConfiguration(messagesConfigFile);
+        reloadMessages();
+    }
+    
+    /**
+     * Reloads the messages configuration from file
+     */
+    public void reloadMessages() {
+        if (messagesConfigFile == null) {
+            messagesConfigFile = new File(plugin.getDataFolder(), "messages.yml");
+        }
+        if (messagesConfigFile.exists()) {
+            messagesconfig = YamlConfiguration.loadConfiguration(messagesConfigFile);
+        } else {
+            plugin.getLogger().warning("Messages file not found: " + messagesConfigFile.getPath());
+        }
     }
 
     private String getMessage(String path, String defaultValue) {
