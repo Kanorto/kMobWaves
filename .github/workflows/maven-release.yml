@@ -1,0 +1,90 @@
+name: Maven Release Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  maven-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Generate version number
+        id: version
+        run: |
+          # Use timestamp-based version for automatic releases
+          VERSION=$(date -u +"%Y.%m.%d.%H%M")
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Generated version: $VERSION"
+
+      - name: Update version in pom.xml
+        run: |
+          sed -i "s|<version>.*</version>|<version>${{ steps.version.outputs.VERSION }}</version>|" pom.xml
+          grep -A2 "<artifactId>kMobWaves</artifactId>" pom.xml | head -3
+
+      - name: Build with Maven
+        run: mvn clean package --batch-mode --update-snapshots
+
+      - name: Get JAR filename
+        id: jarfile
+        run: |
+          JAR_FILE=$(ls target/*.jar | grep -v original | head -1)
+          JAR_NAME=$(basename "$JAR_FILE")
+          echo "JAR_FILE=$JAR_FILE" >> $GITHUB_OUTPUT
+          echo "JAR_NAME=$JAR_NAME" >> $GITHUB_OUTPUT
+          echo "Found JAR: $JAR_NAME"
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          cat > release_notes.md << 'EOF'
+          ## Automatic Maven Release Build
+
+          This is an automated release build triggered by a push to the main branch.
+
+          **Version:** ${{ steps.version.outputs.VERSION }}
+          **Build Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Commit:** ${{ github.sha }}
+
+          ### Installation
+          1. Download `${{ steps.jarfile.outputs.JAR_NAME }}`
+          2. Place in your server's `plugins/` folder
+          3. Restart your server
+          4. Configure in `plugins/kMobWaves/config.yml`
+
+          ### Requirements
+          - Minecraft 1.21+
+          - Paper or forks
+          - MythicMobs 5.6.1+
+
+          ### Recent Changes
+          See commit history for details of changes included in this release.
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: Release v${{ steps.version.outputs.VERSION }}
+          files: ${{ steps.jarfile.outputs.JAR_FILE }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
