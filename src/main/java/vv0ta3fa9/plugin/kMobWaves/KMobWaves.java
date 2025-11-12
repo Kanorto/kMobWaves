@@ -72,6 +72,37 @@ public final class KMobWaves extends JavaPlugin {
         }
     }
 
+    /**
+     * Reloads plugin configuration without restarting the plugin
+     * This is the safe way to reload configuration that doesn't close the classloader
+     */
+    public void reloadPluginConfig() {
+        try {
+            // Reload configuration files
+            configManager.reloadConfig();
+            configManager.setupColorizer();
+            messagesManager.reloadMessages();
+            
+            // If waves are active, stop them before reloading
+            boolean wasActive = wavesManager.isActive();
+            if (wasActive) {
+                wavesManager.stopWaves();
+                getLogger().info("Остановлены активные волны для перезагрузки конфигурации");
+            }
+            
+            // Reload waves configuration
+            wavesManager.loadWaves();
+            
+            getLogger().info("Конфигурация успешно перезагружена");
+        } catch (Exception e) {
+            getLogger().severe("Ошибка при перезагрузке конфигурации: " + e.getMessage());
+            if (configManager.getDebug()) {
+                e.printStackTrace();
+            }
+            throw e;
+        }
+    }
+
     // ---- Геттеры ----
 
     public MessagesManager getMessagesManager() {

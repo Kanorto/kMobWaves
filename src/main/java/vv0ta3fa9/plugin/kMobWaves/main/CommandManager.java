@@ -39,12 +39,13 @@ public class CommandManager implements CommandExecutor {
                     return true;
                 }
                 try {
-                    Bukkit.getPluginManager().disablePlugin(plugin);
-                    Bukkit.getPluginManager().enablePlugin(plugin);
+                    plugin.reloadPluginConfig();
                     send(sender, plugin.getMessagesManager().reloadplugin());
                 } catch (Exception e) {
-                    send(sender, "§4§lОшибка при перезагрузке плагина: " + e.getMessage());
-                    e.printStackTrace();
+                    send(sender, "§4§lОшибка при перезагрузке конфигурации: " + e.getMessage());
+                    if (plugin.getConfigManager().getDebug()) {
+                        e.printStackTrace();
+                    }
                 }
                 return true;
             case "start":

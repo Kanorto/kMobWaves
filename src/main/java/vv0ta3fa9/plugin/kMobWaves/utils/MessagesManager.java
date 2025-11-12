@@ -26,6 +26,20 @@ public class MessagesManager {
         }
         messagesconfig = YamlConfiguration.loadConfiguration(messagesConfigFile);
     }
+    
+    /**
+     * Reloads the messages configuration from file
+     */
+    public void reloadMessages() {
+        if (messagesConfigFile == null) {
+            messagesConfigFile = new File(plugin.getDataFolder(), "messages.yml");
+        }
+        if (messagesConfigFile.exists()) {
+            messagesconfig = YamlConfiguration.loadConfiguration(messagesConfigFile);
+        } else {
+            plugin.getLogger().warning("Messages file not found: " + messagesConfigFile.getPath());
+        }
+    }
 
     private String getMessage(String path, String defaultValue) {
         if (messagesconfig == null) return defaultValue;
