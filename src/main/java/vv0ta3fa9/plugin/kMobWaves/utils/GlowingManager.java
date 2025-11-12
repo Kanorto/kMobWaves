@@ -79,6 +79,7 @@ public class GlowingManager {
         try {
             ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
             int count = 0;
+            int skippedObjects = 0;
             
             for (Entity mob : mobs) {
                 if (mob == null || mob.isDead()) {
@@ -106,11 +107,7 @@ public class GlowingManager {
                         // Проверяем, что serializer не null (известная проблема ProtocolLib)
                         var serializer = watchableObject.getWatcherObject().getSerializer();
                         if (serializer == null) {
-                            if (plugin.getConfigManager().getDebug()) {
-                                plugin.getLogger().warning("Пропускаем watchableObject с индексом " + 
-                                    watchableObject.getIndex() + " для моба " + mob.getType() + 
-                                    " (serializer == null)");
-                            }
+                            skippedObjects++;
                             continue;
                         }
                         
@@ -132,6 +129,11 @@ public class GlowingManager {
                         plugin.getLogger().warning("Ошибка при применении ProtocolLib подсветки к мобу " + mob.getType() + ": " + e.getMessage());
                     }
                 }
+            }
+            
+            // Логируем сводку только если были пропущенные объекты и включен режим отладки
+            if (skippedObjects > 0 && plugin.getConfigManager().getDebug()) {
+                plugin.getLogger().info("Пропущено " + skippedObjects + " watchableObject(ов) с null serializer при применении подсветки");
             }
             
             return count;
@@ -179,6 +181,7 @@ public class GlowingManager {
     private void removeProtocolLibGlowing(@NotNull List<Entity> mobs, @NotNull Player viewer) {
         try {
             ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
+            int skippedObjects = 0;
             
             for (Entity mob : mobs) {
                 if (mob == null || mob.isDead()) {
@@ -206,11 +209,7 @@ public class GlowingManager {
                         // Проверяем, что serializer не null (известная проблема ProtocolLib)
                         var serializer = watchableObject.getWatcherObject().getSerializer();
                         if (serializer == null) {
-                            if (plugin.getConfigManager().getDebug()) {
-                                plugin.getLogger().warning("Пропускаем watchableObject с индексом " + 
-                                    watchableObject.getIndex() + " для моба " + mob.getType() + 
-                                    " (serializer == null)");
-                            }
+                            skippedObjects++;
                             continue;
                         }
                         
@@ -231,6 +230,11 @@ public class GlowingManager {
                         plugin.getLogger().warning("Ошибка при снятии ProtocolLib подсветки с моба " + mob.getType() + ": " + e.getMessage());
                     }
                 }
+            }
+            
+            // Логируем сводку только если были пропущенные объекты и включен режим отладки
+            if (skippedObjects > 0 && plugin.getConfigManager().getDebug()) {
+                plugin.getLogger().info("Пропущено " + skippedObjects + " watchableObject(ов) с null serializer при снятии подсветки");
             }
             
         } catch (Exception e) {
