@@ -157,17 +157,17 @@ public class CommandManager implements CommandExecutor {
                     if ("ADMIN".equalsIgnoreCase(highlightMode) && plugin.getGlowingManager().isProtocolLibAvailable()) {
                         // В режиме ADMIN с ProtocolLib подсветка видна только администратору
                         viewer = player;
-                        visibilityMessage = "только для вас";
+                        visibilityMessage = plugin.getMessagesManager().highlightVisibilityAdmin();
                     } else {
                         // В режиме ALL или без ProtocolLib подсветка видна всем
                         viewer = null;
-                        visibilityMessage = "для всех игроков";
+                        visibilityMessage = plugin.getMessagesManager().highlightVisibilityAll();
                     }
                     
                     // Применяем подсветку через GlowingManager
                     int highlighted = plugin.getGlowingManager().applyGlowing(mobs, viewer);
                     
-                    send(sender, "§aПодсвечено " + highlighted + " мобов " + visibilityMessage + "! Подсветка исчезнет через 10 секунд.");
+                    send(sender, plugin.getMessagesManager().highlightSuccess(highlighted, visibilityMessage));
                     
                     // Сохраняем список мобов и убираем подсветку через 10 секунд
                     final List<Entity> glowingMobs = new ArrayList<>(mobs);

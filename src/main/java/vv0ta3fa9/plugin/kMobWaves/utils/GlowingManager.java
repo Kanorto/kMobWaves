@@ -90,14 +90,15 @@ public class GlowingManager {
                     PacketContainer packet = protocolManager.createPacket(PacketType.Play.Server.ENTITY_METADATA);
                     packet.getIntegers().write(0, mob.getEntityId());
                     
-                    // Получаем текущие метаданные
+                    // Получаем текущие метаданные и клонируем их
                     WrappedDataWatcher watcher = WrappedDataWatcher.getEntityWatcher(mob).deepClone();
                     
                     // Устанавливаем флаг свечения (индекс 0, битовая маска 0x40)
                     byte currentFlags = watcher.getByte(0);
                     watcher.setObject(0, (byte) (currentFlags | 0x40));
                     
-                    // Создаем список значений для пакета
+                    // Создаем список значений для пакета из ОБНОВЛЕННОГО watcher
+                    // После setObject нужно получать данные из модифицированного watcher
                     List<WrappedDataValue> wrappedDataValueList = new ArrayList<>();
                     for (WrappedDataWatcher.WrappedWatchableObject entry : watcher.getWatchableObjects()) {
                         if (entry == null) continue;
@@ -178,14 +179,15 @@ public class GlowingManager {
                     PacketContainer packet = protocolManager.createPacket(PacketType.Play.Server.ENTITY_METADATA);
                     packet.getIntegers().write(0, mob.getEntityId());
                     
-                    // Получаем текущие метаданные
+                    // Получаем текущие метаданные и клонируем их
                     WrappedDataWatcher watcher = WrappedDataWatcher.getEntityWatcher(mob).deepClone();
                     
                     // Убираем флаг свечения (индекс 0, битовая маска 0x40)
                     byte currentFlags = watcher.getByte(0);
                     watcher.setObject(0, (byte) (currentFlags & ~0x40));
                     
-                    // Создаем список значений для пакета
+                    // Создаем список значений для пакета из ОБНОВЛЕННОГО watcher
+                    // После setObject нужно получать данные из модифицированного watcher
                     List<WrappedDataValue> wrappedDataValueList = new ArrayList<>();
                     for (WrappedDataWatcher.WrappedWatchableObject entry : watcher.getWatchableObjects()) {
                         if (entry == null) continue;

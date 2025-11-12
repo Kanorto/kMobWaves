@@ -63,4 +63,19 @@ public class MessagesManager {
                 .replace("%count%", count)
                 .replace("%wave%", currentWave);
     }
+    
+    // ---- highlight ---- //
+    public String highlightSuccess(int count, String visibility) {
+        return getMessage("highlight.success", "&aПодсвечено %count% мобов %visibility%! Подсветка исчезнет через 10 секунд.")
+                .replace("%count%", String.valueOf(count))
+                .replace("%visibility%", visibility);
+    }
+    
+    public String highlightVisibilityAdmin() {
+        return getMessage("highlight.visibility-admin", "только для вас");
+    }
+    
+    public String highlightVisibilityAll() {
+        return getMessage("highlight.visibility-all", "для всех игроков");
+    }
 }
