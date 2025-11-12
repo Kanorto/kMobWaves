@@ -104,7 +104,7 @@ public class GlowingManager {
                         if (watchableObject == null) continue;
                         wrappedDataValueList.add(new WrappedDataValue(
                             watchableObject.getIndex(),
-                            watchableObject.getSerializer(),
+                            watchableObject.getWatcherObject().getSerializer(),
                             watchableObject.getRawValue()
                         ));
                     }
@@ -192,7 +192,7 @@ public class GlowingManager {
                         if (watchableObject == null) continue;
                         wrappedDataValueList.add(new WrappedDataValue(
                             watchableObject.getIndex(),
-                            watchableObject.getSerializer(),
+                            watchableObject.getWatcherObject().getSerializer(),
                             watchableObject.getRawValue()
                         ));
                     }
