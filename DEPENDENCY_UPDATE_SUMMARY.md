@@ -28,7 +28,7 @@ Received status code 403 from server: Forbidden
 ### 2. Mythic-Dist Update
 - **Old**: `io.lumine:Mythic-Dist:5.6.1`
 - **New**: `io.lumine:Mythic-Dist:5.9.5`
-- Latest version as of 2024, brings compatibility improvements
+- Updated to 5.9.5, brings compatibility improvements
 
 ### 3. PlaceholderAPI
 - **Current**: `me.clip:placeholderapi:2.11.6`
