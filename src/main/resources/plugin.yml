@@ -8,6 +8,7 @@ depend:
   - MythicMobs
 softdepend:
   - PlaceholderAPI
+  - ProtocolLib
 commands:
   kmobwaves:
     description: Главная команда управления kMobWaves

@@ -150,26 +150,32 @@ public class CommandManager implements CommandExecutor {
                 }
                 
                 try {
-                    // Подсвечиваем мобов (видно всем игрокам на сервере)
-                    int highlighted = 0;
-                    for (Entity mob : mobs) {
-                        if (mob != null && !mob.isDead()) {
-                            mob.setGlowing(true);
-                            highlighted++;
-                        }
+                    // Определяем, для кого видна подсветка
+                    Player viewer = null;
+                    String visibilityMessage;
+                    
+                    if ("ADMIN".equalsIgnoreCase(highlightMode) && plugin.getGlowingManager().isProtocolLibAvailable()) {
+                        // В режиме ADMIN с ProtocolLib подсветка видна только администратору
+                        viewer = player;
+                        visibilityMessage = "только для вас";
+                    } else {
+                        // В режиме ALL или без ProtocolLib подсветка видна всем
+                        viewer = null;
+                        visibilityMessage = "для всех игроков";
                     }
                     
-                    send(sender, "§aПодсвечено " + highlighted + " мобов! Подсветка исчезнет через 10 секунд.");
+                    // Применяем подсветку через GlowingManager
+                    int highlighted = plugin.getGlowingManager().applyGlowing(mobs, viewer);
+                    
+                    send(sender, "§aПодсвечено " + highlighted + " мобов " + visibilityMessage + "! Подсветка исчезнет через 10 секунд.");
                     
                     // Сохраняем список мобов и убираем подсветку через 10 секунд
                     final List<Entity> glowingMobs = new ArrayList<>(mobs);
+                    final Player finalViewer = viewer;
+                    
                     int taskId = Bukkit.getScheduler().runTaskLater(plugin, () -> {
                         try {
-                            for (Entity mob : glowingMobs) {
-                                if (mob != null && !mob.isDead()) {
-                                    mob.setGlowing(false);
-                                }
-                            }
+                            plugin.getGlowingManager().removeGlowing(glowingMobs, finalViewer);
                         } catch (Exception e) {
                             if (plugin.getConfigManager().getDebug()) {
                                 plugin.getLogger().warning("Ошибка при снятии подсветки мобов: " + e.getMessage());

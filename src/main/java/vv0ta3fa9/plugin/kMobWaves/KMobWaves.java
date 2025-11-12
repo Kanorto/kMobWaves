@@ -6,6 +6,7 @@ import vv0ta3fa9.plugin.kMobWaves.main.CommandManager;
 import vv0ta3fa9.plugin.kMobWaves.main.Expension;
 import vv0ta3fa9.plugin.kMobWaves.main.WavesManager;
 import vv0ta3fa9.plugin.kMobWaves.utils.ConfigManager;
+import vv0ta3fa9.plugin.kMobWaves.utils.GlowingManager;
 import vv0ta3fa9.plugin.kMobWaves.utils.MessagesManager;
 import vv0ta3fa9.plugin.kMobWaves.utils.Runner.PaperRunner;
 import vv0ta3fa9.plugin.kMobWaves.utils.Runner.Runner;
@@ -16,6 +17,7 @@ public final class KMobWaves extends JavaPlugin {
     private ConfigManager configManager;
     private MessagesManager messagesManager;
     private Utils utils;
+    private GlowingManager glowingManager;
     private final Runner runner = new PaperRunner(this);
     private CommandManager commandsManager;
     private WavesManager wavesManager;
@@ -51,6 +53,7 @@ public final class KMobWaves extends JavaPlugin {
             configManager = new ConfigManager(this, runner);
             utils = new Utils();
             messagesManager = new MessagesManager(this, runner);
+            glowingManager = new GlowingManager(this);
             commandsManager = new CommandManager(this, runner);
             wavesManager = new WavesManager(this, runner);
         } catch (Exception e) {
@@ -114,6 +117,10 @@ public final class KMobWaves extends JavaPlugin {
 
     public Utils getUtils() {
         return utils;
+    }
+    
+    public GlowingManager getGlowingManager() {
+        return glowingManager;
     }
     
     public WavesManager getWavesManager() {
