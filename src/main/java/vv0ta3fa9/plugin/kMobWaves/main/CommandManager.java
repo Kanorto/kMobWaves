@@ -115,10 +115,23 @@ public class CommandManager implements CommandExecutor {
                 send(sender, plugin.getMessagesManager().info(String.valueOf(remaining), String.valueOf(currentWave)));
                 return true;
             case "highlight":
-                if (!sender.hasPermission("kmobwaves.highlight")) {
-                    send(sender, plugin.getMessagesManager().nopermission());
-                    return true;
+                // Проверяем режим подсветки из конфига
+                String highlightMode = plugin.getConfigManager().getHighlightMode();
+                
+                // В режиме ADMIN требуется право kmobwaves.admin
+                // В режиме ALL требуется право kmobwaves.highlight
+                if ("ADMIN".equalsIgnoreCase(highlightMode)) {
+                    if (!sender.hasPermission("kmobwaves.admin")) {
+                        send(sender, plugin.getMessagesManager().nopermission());
+                        return true;
+                    }
+                } else {
+                    if (!sender.hasPermission("kmobwaves.highlight")) {
+                        send(sender, plugin.getMessagesManager().nopermission());
+                        return true;
+                    }
                 }
+                
                 if (!(sender instanceof Player)) {
                     send(sender, plugin.getMessagesManager().playeronly());
                     return true;
@@ -137,7 +150,7 @@ public class CommandManager implements CommandExecutor {
                 }
                 
                 try {
-                    // Применяем эффект свечения напрямую к мобам
+                    // Подсвечиваем мобов (видно всем игрокам на сервере)
                     int highlighted = 0;
                     for (Entity mob : mobs) {
                         if (mob != null && !mob.isDead()) {
