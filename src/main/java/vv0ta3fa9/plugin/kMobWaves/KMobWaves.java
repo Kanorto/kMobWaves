@@ -37,6 +37,9 @@ public final class KMobWaves extends JavaPlugin {
     @Override
     public void onDisable() {
         if (wavesManager != null) {
+            // Cancel all highlight tasks first
+            wavesManager.cancelHighlightTasks();
+            
             if (wavesManager.isActive()) {
                 wavesManager.stopWaves();
             }

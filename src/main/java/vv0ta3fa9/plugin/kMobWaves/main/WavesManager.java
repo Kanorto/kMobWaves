@@ -333,8 +333,9 @@ public class WavesManager implements Listener {
                     LivingEntity livingEntity = (LivingEntity) entity;
                     double healthMultiplier = wave.getHealthMultiplier();
                     if (healthMultiplier > 0 && healthMultiplier != 1.0) {
-                        // Clamp to reasonable range (0.1 to 100.0)
-                        healthMultiplier = Math.max(0.1, Math.min(100.0, healthMultiplier));
+                        // Clamp to reasonable range (0.01 to 100.0)
+                        // Allows health multipliers from 1% to 100x base health for maximum flexibility
+                        healthMultiplier = Math.max(0.01, Math.min(100.0, healthMultiplier));
                         
                         try {
                             double newMaxHealth = livingEntity.getMaxHealth() * healthMultiplier;
@@ -422,6 +423,17 @@ public class WavesManager implements Listener {
                 if (plugin.getConfigManager().getDebug()) {
                     plugin.getLogger().warning("Ошибка при добавлении игрока к BossBar: " + e.getMessage());
                 }
+            }
+        }
+    }
+    
+    @EventHandler
+    public void onPlayerQuit(@NotNull org.bukkit.event.player.PlayerQuitEvent event) {
+        try {
+            bossBarManager.removePlayer(event.getPlayer());
+        } catch (Exception e) {
+            if (plugin.getConfigManager().getDebug()) {
+                plugin.getLogger().warning("Ошибка при удалении игрока из BossBar: " + e.getMessage());
             }
         }
     }
@@ -527,10 +539,16 @@ public class WavesManager implements Listener {
     public List<Entity> getActiveMobEntities() {
         List<Entity> entities = new ArrayList<>();
         
-        for (UUID mobId : activeMobs.keySet()) {
+        // Clean up dead entities while iterating
+        Iterator<UUID> iterator = activeMobs.keySet().iterator();
+        while (iterator.hasNext()) {
+            UUID mobId = iterator.next();
             Entity entity = plugin.getServer().getEntity(mobId);
             if (entity != null && !entity.isDead()) {
                 entities.add(entity);
+            } else {
+                // Remove dead or unloaded entities
+                iterator.remove();
             }
         }
         
@@ -548,7 +566,7 @@ public class WavesManager implements Listener {
     /**
      * Отменяет все активные задачи подсветки
      */
-    private void cancelHighlightTasks() {
+    public void cancelHighlightTasks() {
         for (int taskId : highlightTasks) {
             try {
                 Bukkit.getScheduler().cancelTask(taskId);

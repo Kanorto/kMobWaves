@@ -164,6 +164,11 @@ public class ConfigManager {
     }
     
     public String getBossBarMode() {
+        // Migration: If bossbar.mode is missing, check for bossbar.enabled (old format)
+        if (config != null && !config.contains("bossbar.mode") && config.contains("bossbar.enabled")) {
+            boolean enabled = config.getBoolean("bossbar.enabled", true);
+            return enabled ? "ALL" : "NONE";
+        }
         return getString("bossbar.mode", "ALL").toUpperCase();
     }
     
