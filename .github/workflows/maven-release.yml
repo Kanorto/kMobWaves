@@ -34,7 +34,7 @@ jobs:
 
       - name: Update version in pom.xml
         run: |
-          sed -i "s|<version>.*</version>|<version>${{ steps.version.outputs.VERSION }}</version>|" pom.xml
+          mvn versions:set -DnewVersion=${{ steps.version.outputs.VERSION }} --batch-mode
           grep -A2 "<artifactId>kMobWaves</artifactId>" pom.xml | head -3
 
       - name: Build with Maven
