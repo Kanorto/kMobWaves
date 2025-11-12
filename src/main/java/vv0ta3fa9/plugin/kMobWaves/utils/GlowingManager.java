@@ -102,9 +102,21 @@ public class GlowingManager {
                     List<WrappedDataValue> wrappedDataValueList = new ArrayList<>();
                     for (var watchableObject : watcher.getWatchableObjects()) {
                         if (watchableObject == null) continue;
+                        
+                        // Проверяем, что serializer не null (известная проблема ProtocolLib)
+                        var serializer = watchableObject.getWatcherObject().getSerializer();
+                        if (serializer == null) {
+                            if (plugin.getConfigManager().getDebug()) {
+                                plugin.getLogger().warning("Пропускаем watchableObject с индексом " + 
+                                    watchableObject.getIndex() + " для моба " + mob.getType() + 
+                                    " (serializer == null)");
+                            }
+                            continue;
+                        }
+                        
                         wrappedDataValueList.add(new WrappedDataValue(
                             watchableObject.getIndex(),
-                            watchableObject.getWatcherObject().getSerializer(),
+                            serializer,
                             watchableObject.getRawValue()
                         ));
                     }
@@ -190,9 +202,21 @@ public class GlowingManager {
                     List<WrappedDataValue> wrappedDataValueList = new ArrayList<>();
                     for (var watchableObject : watcher.getWatchableObjects()) {
                         if (watchableObject == null) continue;
+                        
+                        // Проверяем, что serializer не null (известная проблема ProtocolLib)
+                        var serializer = watchableObject.getWatcherObject().getSerializer();
+                        if (serializer == null) {
+                            if (plugin.getConfigManager().getDebug()) {
+                                plugin.getLogger().warning("Пропускаем watchableObject с индексом " + 
+                                    watchableObject.getIndex() + " для моба " + mob.getType() + 
+                                    " (serializer == null)");
+                            }
+                            continue;
+                        }
+                        
                         wrappedDataValueList.add(new WrappedDataValue(
                             watchableObject.getIndex(),
-                            watchableObject.getWatcherObject().getSerializer(),
+                            serializer,
                             watchableObject.getRawValue()
                         ));
                     }
