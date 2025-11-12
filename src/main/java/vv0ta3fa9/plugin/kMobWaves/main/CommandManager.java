@@ -4,8 +4,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import vv0ta3fa9.plugin.kMobWaves.KMobWaves;
 import vv0ta3fa9.plugin.kMobWaves.utils.Runner.Runner;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class CommandManager implements CommandExecutor {
 
@@ -21,7 +26,7 @@ public class CommandManager implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
         if (args.length == 0) {
-            send(sender, "§cИспользование: /kmobwaves <reload|start|stop|info|force_start>");
+            send(sender, "§cИспользование: /kmobwaves <reload|start|stop|info|force_start|highlight>");
             return true;
         }
 
@@ -108,9 +113,70 @@ public class CommandManager implements CommandExecutor {
                 int currentWave = plugin.getWavesManager().getCurrentWaveNumber();
                 send(sender, plugin.getMessagesManager().info(String.valueOf(remaining), String.valueOf(currentWave)));
                 return true;
+            case "highlight":
+                if (!sender.hasPermission("kmobwaves.highlight")) {
+                    send(sender, plugin.getMessagesManager().nopermission());
+                    return true;
+                }
+                if (!(sender instanceof Player)) {
+                    send(sender, plugin.getMessagesManager().playeronly());
+                    return true;
+                }
+                if (!plugin.getWavesManager().isActive()) {
+                    send(sender, "§cВолны не активны!");
+                    return true;
+                }
+                
+                Player player = (Player) sender;
+                List<Entity> mobs = plugin.getWavesManager().getActiveMobEntities();
+                
+                if (mobs.isEmpty()) {
+                    send(sender, "§cНет активных мобов для подсветки!");
+                    return true;
+                }
+                
+                try {
+                    // Применяем эффект свечения напрямую к мобам
+                    int highlighted = 0;
+                    for (Entity mob : mobs) {
+                        if (mob != null && !mob.isDead()) {
+                            mob.setGlowing(true);
+                            highlighted++;
+                        }
+                    }
+                    
+                    send(sender, "§aПодсвечено " + highlighted + " мобов! Подсветка исчезнет через 10 секунд.");
+                    
+                    // Сохраняем список мобов и убираем подсветку через 10 секунд
+                    final List<Entity> glowingMobs = new ArrayList<>(mobs);
+                    int taskId = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        try {
+                            for (Entity mob : glowingMobs) {
+                                if (mob != null && !mob.isDead()) {
+                                    mob.setGlowing(false);
+                                }
+                            }
+                        } catch (Exception e) {
+                            if (plugin.getConfigManager().getDebug()) {
+                                plugin.getLogger().warning("Ошибка при снятии подсветки мобов: " + e.getMessage());
+                            }
+                        }
+                    }, 200L).getTaskId(); // 10 seconds = 200 ticks
+                    
+                    // Сохраняем ID задачи для возможной отмены при отключении плагина
+                    plugin.getWavesManager().registerHighlightTask(taskId);
+                    
+                } catch (Exception e) {
+                    send(sender, "§cОшибка при подсветке мобов: " + e.getMessage());
+                    if (plugin.getConfigManager().getDebug()) {
+                        e.printStackTrace();
+                    }
+                }
+                return true;
+            default:
+                send(sender, "§cНеизвестная подкоманда. Используйте: /kmobwaves <reload|start|stop|info|force_start|highlight>");
+                return true;
         }
-        send(sender, "§cИспользование: /kmobwaves <reload|start|stop|info|force_start>");
-        return true;
     }
 
     // Метод, используемый для отправки сообщения сендеру с использыванием колорайзера

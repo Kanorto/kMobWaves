@@ -36,8 +36,10 @@ public final class KMobWaves extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (wavesManager != null && wavesManager.isActive()) {
-            wavesManager.stopWaves();
+        if (wavesManager != null) {
+            if (wavesManager.isActive()) {
+                wavesManager.stopWaves();
+            }
         }
     }
 
