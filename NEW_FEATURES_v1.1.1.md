@@ -45,17 +45,16 @@ bossbar:
 
 **Функциональность**:
 - Делает всех оставшихся мобов волны светящимися (glowing effect)
-- **ВАЖНО: Подсветка видна ТОЛЬКО игроку, который использовал команду**
-- Другие игроки не видят эффект свечения
 - Подсветка держится 10 секунд, затем автоматически убирается
 - Помогает найти застрявших или спрятавшихся мобов
 - Требует право `kmobwaves.highlight`
 - Доступна только игрокам (не из консоли)
+- **Примечание**: Подсветка видна всем игрокам на сервере (ограничение vanilla Minecraft API)
 
 **Пример использования**:
 ```
 /kmobwaves highlight
-# → Подсвечено 5 мобов! Только вы видите подсветку. Она исчезнет через 10 секунд.
+# → Подсвечено 5 мобов! Подсветка исчезнет через 10 секунд.
 ```
 
 **Сообщения об ошибках**:
@@ -66,25 +65,25 @@ bossbar:
 
 **Техническая реализация**:
 ```java
-// Создаем уникальную scoreboard команду для игрока
-String teamName = "kmw_glow_" + player.getName();
-Scoreboard scoreboard = player.getScoreboard();
-Team team = scoreboard.registerNewTeam(teamName);
-team.setColor(ChatColor.YELLOW);
-
-// Добавляем мобов в команду - это делает их видимыми только для этого игрока
+// Применяем эффект свечения напрямую к мобам
 for (Entity mob : mobs) {
-    team.addEntry(mob.getUniqueId().toString());
+    if (mob != null && !mob.isDead()) {
+        mob.setGlowing(true);
+    }
 }
 
-// Автоматическое снятие через 10 секунд
+// Убираем подсветку через 10 секунд
+final List<Entity> glowingMobs = new ArrayList<>(mobs);
 Bukkit.getScheduler().runTaskLater(plugin, () -> {
-    Team removeTeam = scoreboard.getTeam(teamName);
-    if (removeTeam != null) {
-        removeTeam.unregister();
+    for (Entity mob : glowingMobs) {
+        if (mob != null && !mob.isDead()) {
+            mob.setGlowing(false);
+        }
     }
 }, 200L); // 200 ticks = 10 seconds
 ```
+
+**Примечание**: Подсветка видна всем игрокам на сервере. Для истинной персональной подсветки требуется использование пакетов или библиотеки ProtocolLib, что выходит за рамки базовой реализации.
 
 ### 3. Улучшенная обработка ошибок ✅
 

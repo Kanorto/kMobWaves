@@ -21,6 +21,7 @@ import vv0ta3fa9.plugin.kMobWaves.utils.Runner.Runner;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
 
 public class WavesManager implements Listener {
     
@@ -29,6 +30,7 @@ public class WavesManager implements Listener {
     private final Map<UUID, WaveData> activeMobs = new ConcurrentHashMap<>();
     private final List<WaveData> waves = new ArrayList<>();
     private final BossBarManager bossBarManager;
+    private final Set<Integer> highlightTasks = ConcurrentHashMap.newKeySet();
     private int currentWaveIndex = -1;
     private boolean isActive = false;
     private int taskId = -1;
@@ -124,6 +126,9 @@ public class WavesManager implements Listener {
         
         // Удаляем BossBar
         bossBarManager.removeBossBar();
+        
+        // Отменяем все задачи подсветки
+        cancelHighlightTasks();
         
         if (taskId != -1) {
             runner.run(() -> {
@@ -250,6 +255,17 @@ public class WavesManager implements Listener {
                 double offsetX = (random.nextDouble() * 2 - 1) * spawnRadius;
                 double offsetZ = (random.nextDouble() * 2 - 1) * spawnRadius;
                 spawnLoc.add(offsetX, 0, offsetZ);
+                
+                // Adjust Y to highest block at the new X/Z location to prevent spawning in air or underground
+                try {
+                    int highestY = spawnLoc.getWorld().getHighestBlockYAt(spawnLoc);
+                    spawnLoc.setY(highestY + 1);
+                } catch (Exception e) {
+                    // If error occurs, keep original Y coordinate
+                    if (plugin.getConfigManager().getDebug()) {
+                        plugin.getLogger().warning("Ошибка при определении высоты для спавна: " + e.getMessage());
+                    }
+                }
             }
 
             MobSpawnData selectedMob = selectMobByChance(mobsData, random, totalChance);
@@ -316,13 +332,20 @@ public class WavesManager implements Listener {
                 if (entity instanceof LivingEntity) {
                     LivingEntity livingEntity = (LivingEntity) entity;
                     double healthMultiplier = wave.getHealthMultiplier();
-                    if (healthMultiplier != 1.0) {
-                        double newMaxHealth = livingEntity.getMaxHealth() * healthMultiplier;
-                        livingEntity.setMaxHealth(newMaxHealth);
-                        livingEntity.setHealth(newMaxHealth);
+                    if (healthMultiplier > 0 && healthMultiplier != 1.0) {
+                        // Clamp to reasonable range (0.1 to 100.0)
+                        healthMultiplier = Math.max(0.1, Math.min(100.0, healthMultiplier));
                         
-                        if (plugin.getConfigManager().getDebug()) {
-                            plugin.getLogger().info("Применен множитель здоровья " + healthMultiplier + " к мобу " + mobName);
+                        try {
+                            double newMaxHealth = livingEntity.getMaxHealth() * healthMultiplier;
+                            livingEntity.setMaxHealth(newMaxHealth);
+                            livingEntity.setHealth(newMaxHealth);
+                            
+                            if (plugin.getConfigManager().getDebug()) {
+                                plugin.getLogger().info("Применен множитель здоровья " + healthMultiplier + " к мобу " + mobName);
+                            }
+                        } catch (Exception e) {
+                            plugin.getLogger().warning("Ошибка при применении множителя здоровья к мобу " + mobName + ": " + e.getMessage());
                         }
                     }
                 }
@@ -515,16 +538,50 @@ public class WavesManager implements Listener {
     }
     
     /**
+     * Регистрирует задачу подсветки для отслеживания
+     * @param taskId ID задачи
+     */
+    public void registerHighlightTask(int taskId) {
+        highlightTasks.add(taskId);
+    }
+    
+    /**
+     * Отменяет все активные задачи подсветки
+     */
+    private void cancelHighlightTasks() {
+        for (int taskId : highlightTasks) {
+            try {
+                Bukkit.getScheduler().cancelTask(taskId);
+            } catch (Exception e) {
+                if (plugin.getConfigManager().getDebug()) {
+                    plugin.getLogger().warning("Ошибка при отмене задачи подсветки: " + e.getMessage());
+                }
+            }
+        }
+        highlightTasks.clear();
+    }
+    
+    /**
      * Воспроизводит звук для всех онлайн игроков
      */
     private void playSound(String soundName, float volume, float pitch) {
+        Sound sound;
         try {
-            Sound sound = Sound.valueOf(soundName.toUpperCase());
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                player.playSound(player.getLocation(), sound, volume, pitch);
-            }
+            sound = Sound.valueOf(soundName.toUpperCase());
         } catch (IllegalArgumentException e) {
             plugin.getLogger().warning("Неверное название звука: " + soundName);
+            return; // Exit early if sound is invalid
+        }
+        
+        // Play for all players
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            try {
+                player.playSound(player.getLocation(), sound, volume, pitch);
+            } catch (Exception e) {
+                if (plugin.getConfigManager().getDebug()) {
+                    plugin.getLogger().warning("Ошибка воспроизведения звука для " + player.getName());
+                }
+            }
         }
     }
     
@@ -546,8 +603,11 @@ public class WavesManager implements Listener {
         }
         
         for (String command : rewards) {
+            if (command == null || command.trim().isEmpty()) {
+                continue;
+            }
             try {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command.trim());
                 if (plugin.getConfigManager().getDebug()) {
                     plugin.getLogger().info("Выполнена команда-награда: " + command);
                 }

@@ -1,17 +1,15 @@
 package vv0ta3fa9.plugin.kMobWaves.main;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.Team;
 import vv0ta3fa9.plugin.kMobWaves.KMobWaves;
 import vv0ta3fa9.plugin.kMobWaves.utils.Runner.Runner;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class CommandManager implements CommandExecutor {
@@ -138,43 +136,35 @@ public class CommandManager implements CommandExecutor {
                 }
                 
                 try {
-                    // Создаем уникальную команду для каждого игрока
-                    String teamName = "kmw_glow_" + player.getName();
-                    Scoreboard scoreboard = player.getScoreboard();
-                    
-                    // Удаляем старую команду если существует
-                    Team oldTeam = scoreboard.getTeam(teamName);
-                    if (oldTeam != null) {
-                        oldTeam.unregister();
-                    }
-                    
-                    // Создаем новую команду с эффектом свечения
-                    Team team = scoreboard.registerNewTeam(teamName);
-                    team.setColor(ChatColor.YELLOW);
-                    team.setOption(Team.Option.COLLISION_RULE, Team.OptionStatus.NEVER);
-                    
-                    // Добавляем мобов в команду (это делает их светящимися для игрока)
+                    // Применяем эффект свечения напрямую к мобам
+                    int highlighted = 0;
                     for (Entity mob : mobs) {
                         if (mob != null && !mob.isDead()) {
-                            team.addEntry(mob.getUniqueId().toString());
+                            mob.setGlowing(true);
+                            highlighted++;
                         }
                     }
                     
-                    send(sender, "§aПодсвечено " + mobs.size() + " мобов! Только вы видите подсветку. Она исчезнет через 10 секунд.");
+                    send(sender, "§aПодсвечено " + highlighted + " мобов! Подсветка исчезнет через 10 секунд.");
                     
-                    // Убираем подсветку через 10 секунд
-                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    // Сохраняем список мобов и убираем подсветку через 10 секунд
+                    final List<Entity> glowingMobs = new ArrayList<>(mobs);
+                    int taskId = Bukkit.getScheduler().runTaskLater(plugin, () -> {
                         try {
-                            Team removeTeam = scoreboard.getTeam(teamName);
-                            if (removeTeam != null) {
-                                removeTeam.unregister();
+                            for (Entity mob : glowingMobs) {
+                                if (mob != null && !mob.isDead()) {
+                                    mob.setGlowing(false);
+                                }
                             }
                         } catch (Exception e) {
                             if (plugin.getConfigManager().getDebug()) {
-                                plugin.getLogger().warning("Ошибка при снятии подсветки мобов для " + player.getName() + ": " + e.getMessage());
+                                plugin.getLogger().warning("Ошибка при снятии подсветки мобов: " + e.getMessage());
                             }
                         }
-                    }, 200L); // 10 seconds = 200 ticks
+                    }, 200L).getTaskId(); // 10 seconds = 200 ticks
+                    
+                    // Сохраняем ID задачи для возможной отмены при отключении плагина
+                    plugin.getWavesManager().registerHighlightTask(taskId);
                     
                 } catch (Exception e) {
                     send(sender, "§cОшибка при подсветке мобов: " + e.getMessage());

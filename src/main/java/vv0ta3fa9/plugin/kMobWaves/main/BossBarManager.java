@@ -17,6 +17,7 @@ public class BossBarManager {
     private BossBar bossBar;
     private int currentWave;
     private int totalMobs;
+    private String titleTemplate; // Store title template for updates
     
     public BossBarManager(@NotNull KMobWaves plugin) {
         this.plugin = plugin;
@@ -35,8 +36,10 @@ public class BossBarManager {
         this.currentWave = waveNumber;
         this.totalMobs = totalMobs;
         
-        String title = customTitle != null ? customTitle : plugin.getConfigManager().getBossBarTitle();
-        title = formatTitle(title, totalMobs, totalMobs);
+        // Store the title template for use in updates
+        this.titleTemplate = customTitle != null ? customTitle : plugin.getConfigManager().getBossBarTitle();
+        
+        String title = formatTitle(this.titleTemplate, totalMobs, totalMobs);
         title = plugin.getConfigManager().COLORIZER.colorize(title);
         
         BarColor color = parseColor(plugin.getConfigManager().getBossBarColor());
@@ -77,7 +80,8 @@ public class BossBarManager {
             return;
         }
         
-        String title = plugin.getConfigManager().getBossBarTitle();
+        // Use stored title template instead of always fetching from config
+        String title = this.titleTemplate != null ? this.titleTemplate : plugin.getConfigManager().getBossBarTitle();
         title = formatTitle(title, remainingMobs, totalMobs);
         title = plugin.getConfigManager().COLORIZER.colorize(title);
         

@@ -185,7 +185,7 @@ another:
 | `force_start <номер>`<br/>`forcestart <номер>` | Запускает волны с указанной волны | `kmobwaves.admin` | `/kmobwaves force_start 3` или `/kmw forcestart 3` |
 | `stop` | Останавливает все активные волны | `kmobwaves.admin` | `/kmobwaves stop` или `/kmw stop` |
 | `info` | Показывает количество оставшихся мобов и текущую волну | `kmobwaves.user` | `/kmobwaves info` или `/kmw info` |
-| `highlight` | Подсвечивает оставшихся мобов волны на 10 секунд (только для того, кто использовал команду) | `kmobwaves.highlight` | `/kmobwaves highlight` или `/kmw highlight` |
+| `highlight` | Подсвечивает оставшихся мобов волны на 10 секунд для всех игроков | `kmobwaves.highlight` | `/kmobwaves highlight` или `/kmw highlight` |
 | `reload` | Перезагружает плагин | `kmobwaves.admin` | `/kmobwaves reload` или `/kmw reload` |
 
 ### Примеры использования
