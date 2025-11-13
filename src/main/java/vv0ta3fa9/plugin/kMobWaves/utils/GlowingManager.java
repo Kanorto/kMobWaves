@@ -90,36 +90,34 @@ public class GlowingManager {
                     PacketContainer packet = protocolManager.createPacket(PacketType.Play.Server.ENTITY_METADATA);
                     packet.getIntegers().write(0, mob.getEntityId());
                     
-                    // Получаем текущие метаданные и клонируем их
-                    WrappedDataWatcher watcher = WrappedDataWatcher.getEntityWatcher(mob).deepClone();
+                    // Получаем текущие метаданные
+                    WrappedDataWatcher watcher = WrappedDataWatcher.getEntityWatcher(mob);
                     
-                    // Устанавливаем флаг свечения (индекс 0, битовая маска 0x40)
+                    // Вычисляем новое значение флагов с установленным битом свечения (0x40)
                     byte currentFlags = watcher.getByte(0);
-                    watcher.setObject(0, (byte) (currentFlags | 0x40));
+                    byte newFlags = (byte) (currentFlags | 0x40);
                     
-                    // Создаем список значений для пакета из ОБНОВЛЕННОГО watcher
-                    // После setObject нужно получать данные из модифицированного watcher
-                    List<WrappedDataValue> wrappedDataValueList = new ArrayList<>();
-                    for (var watchableObject : watcher.getWatchableObjects()) {
-                        if (watchableObject == null) continue;
-                        
-                        // Проверяем, что serializer не null (известная проблема ProtocolLib)
-                        var serializer = watchableObject.getWatcherObject().getSerializer();
-                        if (serializer == null) {
-                            if (plugin.getConfigManager().getDebug()) {
-                                plugin.getLogger().warning("Пропускаем watchableObject с индексом " + 
-                                    watchableObject.getIndex() + " для моба " + mob.getType() + 
-                                    " (serializer == null)");
-                            }
-                            continue;
+                    // Получаем serializer для индекса 0 из оригинального watcher
+                    var watcherObject = watcher.getWatchableObject(0);
+                    if (watcherObject == null) {
+                        if (plugin.getConfigManager().getDebug()) {
+                            plugin.getLogger().warning("Не удалось получить watchableObject с индексом 0 для моба " + mob.getType());
                         }
-                        
-                        wrappedDataValueList.add(new WrappedDataValue(
-                            watchableObject.getIndex(),
-                            serializer,
-                            watchableObject.getRawValue()
-                        ));
+                        continue;
                     }
+                    
+                    var serializer = watcherObject.getWatcherObject().getSerializer();
+                    if (serializer == null) {
+                        if (plugin.getConfigManager().getDebug()) {
+                            plugin.getLogger().warning("Serializer для индекса 0 равен null для моба " + mob.getType());
+                        }
+                        continue;
+                    }
+                    
+                    // Отправляем только измененное значение (индекс 0 - флаги)
+                    // Это избегает проблем с null serializer для других индексов
+                    List<WrappedDataValue> wrappedDataValueList = new ArrayList<>();
+                    wrappedDataValueList.add(new WrappedDataValue(0, serializer, newFlags));
                     
                     packet.getDataValueCollectionModifier().write(0, wrappedDataValueList);
                     
@@ -190,36 +188,34 @@ public class GlowingManager {
                     PacketContainer packet = protocolManager.createPacket(PacketType.Play.Server.ENTITY_METADATA);
                     packet.getIntegers().write(0, mob.getEntityId());
                     
-                    // Получаем текущие метаданные и клонируем их
-                    WrappedDataWatcher watcher = WrappedDataWatcher.getEntityWatcher(mob).deepClone();
+                    // Получаем текущие метаданные
+                    WrappedDataWatcher watcher = WrappedDataWatcher.getEntityWatcher(mob);
                     
-                    // Убираем флаг свечения (индекс 0, битовая маска 0x40)
+                    // Вычисляем новое значение флагов без бита свечения (0x40)
                     byte currentFlags = watcher.getByte(0);
-                    watcher.setObject(0, (byte) (currentFlags & ~0x40));
+                    byte newFlags = (byte) (currentFlags & ~0x40);
                     
-                    // Создаем список значений для пакета из ОБНОВЛЕННОГО watcher
-                    // После setObject нужно получать данные из модифицированного watcher
-                    List<WrappedDataValue> wrappedDataValueList = new ArrayList<>();
-                    for (var watchableObject : watcher.getWatchableObjects()) {
-                        if (watchableObject == null) continue;
-                        
-                        // Проверяем, что serializer не null (известная проблема ProtocolLib)
-                        var serializer = watchableObject.getWatcherObject().getSerializer();
-                        if (serializer == null) {
-                            if (plugin.getConfigManager().getDebug()) {
-                                plugin.getLogger().warning("Пропускаем watchableObject с индексом " + 
-                                    watchableObject.getIndex() + " для моба " + mob.getType() + 
-                                    " (serializer == null)");
-                            }
-                            continue;
+                    // Получаем serializer для индекса 0 из оригинального watcher
+                    var watcherObject = watcher.getWatchableObject(0);
+                    if (watcherObject == null) {
+                        if (plugin.getConfigManager().getDebug()) {
+                            plugin.getLogger().warning("Не удалось получить watchableObject с индексом 0 для моба " + mob.getType());
                         }
-                        
-                        wrappedDataValueList.add(new WrappedDataValue(
-                            watchableObject.getIndex(),
-                            serializer,
-                            watchableObject.getRawValue()
-                        ));
+                        continue;
                     }
+                    
+                    var serializer = watcherObject.getWatcherObject().getSerializer();
+                    if (serializer == null) {
+                        if (plugin.getConfigManager().getDebug()) {
+                            plugin.getLogger().warning("Serializer для индекса 0 равен null для моба " + mob.getType());
+                        }
+                        continue;
+                    }
+                    
+                    // Отправляем только измененное значение (индекс 0 - флаги)
+                    // Это избегает проблем с null serializer для других индексов
+                    List<WrappedDataValue> wrappedDataValueList = new ArrayList<>();
+                    wrappedDataValueList.add(new WrappedDataValue(0, serializer, newFlags));
                     
                     packet.getDataValueCollectionModifier().write(0, wrappedDataValueList);
                     

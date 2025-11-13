@@ -497,10 +497,28 @@ public class WavesManager implements Listener {
     }
     
     /**
+     * Обновляет BossBar если количество мобов изменилось
+     * @param sizeBefore количество мобов до очистки
+     * @param sizeAfter количество мобов после очистки
+     */
+    private void updateBossBarIfNeeded(int sizeBefore, int sizeAfter) {
+        if (sizeBefore != sizeAfter && isActive) {
+            try {
+                bossBarManager.updateProgress(sizeAfter);
+            } catch (Exception e) {
+                if (plugin.getConfigManager().getDebug()) {
+                    plugin.getLogger().warning("Ошибка при обновлении BossBar после очистки: " + e.getMessage());
+                }
+            }
+        }
+    }
+    
+    /**
      * @return количество живых мобов
      */
     public int getRemainingMobsCount() {
         // Очищаем мертвых мобов синхронно
+        int sizeBefore = activeMobs.size();
         Iterator<UUID> iterator = activeMobs.keySet().iterator();
         while (iterator.hasNext()) {
             UUID mobId = iterator.next();
@@ -510,7 +528,11 @@ public class WavesManager implements Listener {
             }
         }
         
-        return activeMobs.size();
+        // Обновляем BossBar если количество изменилось
+        int sizeAfter = activeMobs.size();
+        updateBossBarIfNeeded(sizeBefore, sizeAfter);
+        
+        return sizeAfter;
     }
     
     /**
@@ -540,6 +562,7 @@ public class WavesManager implements Listener {
         List<Entity> entities = new ArrayList<>();
         
         // Clean up dead entities while iterating
+        int sizeBefore = activeMobs.size();
         Iterator<UUID> iterator = activeMobs.keySet().iterator();
         while (iterator.hasNext()) {
             UUID mobId = iterator.next();
@@ -551,6 +574,10 @@ public class WavesManager implements Listener {
                 iterator.remove();
             }
         }
+        
+        // Обновляем BossBar если количество изменилось
+        int sizeAfter = activeMobs.size();
+        updateBossBarIfNeeded(sizeBefore, sizeAfter);
         
         return entities;
     }
