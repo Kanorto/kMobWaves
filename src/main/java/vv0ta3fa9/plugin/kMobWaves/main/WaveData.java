@@ -7,9 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Класс для хранения данных о волне
- */
 public class WaveData {
     
     private final int count;
@@ -75,4 +72,3 @@ public class WaveData {
         return new ArrayList<>(rewards);
     }
 }
-

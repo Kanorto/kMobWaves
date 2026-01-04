@@ -155,4 +155,3 @@ public class LegacyAdvancedColorizer implements Colorizer {
         }
     }
 }
-

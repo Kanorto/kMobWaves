@@ -4,7 +4,6 @@ public class Utils {
 
     public final char COLOR_CHAR = '§';
 
-
     public String translateAlternateColorCodes(char altColorChar, String textToTranslate) {
         final char[] b = textToTranslate.toCharArray();
 
@@ -25,4 +24,3 @@ public class Utils {
         };
     }
 }
-

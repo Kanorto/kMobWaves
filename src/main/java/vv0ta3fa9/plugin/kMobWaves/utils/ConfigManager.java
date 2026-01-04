@@ -50,9 +50,6 @@ public class ConfigManager {
         }
     }
     
-    /**
-     * Перезагружает конфиг из файла
-     */
     public void reloadConfig() {
         if (configFile == null) {
             configFile = new File(plugin.getDataFolder(), "config.yml");
@@ -63,8 +60,6 @@ public class ConfigManager {
             plugin.getLogger().warning("Конфиг файл не найден: " + configFile.getPath());
         }
     }
-
-    // ---- Гетеры ----
 
     public boolean getBoolean(String path, boolean def) {
         if (config == null) return def;
@@ -80,8 +75,6 @@ public class ConfigManager {
         if (config == null) return new ArrayList<>();
         return config.getStringList(path);
     }
-
-    // ---- Общие настройки ----
 
     public boolean getDebug() {
         return getBoolean("debug", true);
@@ -164,7 +157,6 @@ public class ConfigManager {
     }
     
     public String getBossBarMode() {
-        // Migration: If bossbar.mode is missing, check for bossbar.enabled (old format)
         if (config != null && !config.contains("bossbar.mode") && config.contains("bossbar.enabled")) {
             boolean enabled = config.getBoolean("bossbar.enabled", true);
             return enabled ? "ALL" : "NONE";
@@ -204,7 +196,6 @@ public class ConfigManager {
             return waves;
         }
         
-
         if (!config.contains("Waves")) {
             return waves;
         }
@@ -216,15 +207,12 @@ public class ConfigManager {
         
         for (int i = 0; i < wavesList.size(); i++) {
             try {
-                // Получаем секцию для каждого элемента списка
                 String wavePath = "Waves." + i;
                 ConfigurationSection section = config.getConfigurationSection(wavePath);
                 
                 if (section == null) {
-                    // Если не получилось получить как секцию, пробуем через Map
                     Object waveObj = wavesList.get(i);
                     if (waveObj instanceof java.util.Map) {
-                        // Создаем временную секцию из Map
                         @SuppressWarnings("unchecked")
                         java.util.Map<String, Object> waveMap = (java.util.Map<String, Object>) waveObj;
                         section = config.createSection(wavePath);
@@ -262,7 +250,6 @@ public class ConfigManager {
                     plugin.getLogger().warning("Волна " + count + ": Нет доступных миров на сервере!");
                 }
                 
-                // Пытаемся определить мир из координат
                 World world = null;
                 for (String coordStr : coordinatesList) {
                     World coordWorld = getWorldFromCoordinates(coordStr, defaultWorld);
@@ -275,7 +262,6 @@ public class ConfigManager {
                     }
                 }
                 
-                // Если не удалось определить мир из координат, используется дефолтный
                 if (world == null) {
                     if (defaultWorld == null) {
                         plugin.getLogger().severe("Волна " + count + ": Не найден мир для спавна мобов! Укажите мир в координатах (world,x,y,z) или убедитесь, что миры загружены. Доступных миров: " + availableWorlds.size());
@@ -322,12 +308,6 @@ public class ConfigManager {
         return waves;
     }
     
-    /**
-     * Определяет мир из строки координат
-     * @param coordStr строка с координатами
-     * @param defaultWorld мир по умолчанию
-     * @return World или null если не удалось определить
-     */
     private World getWorldFromCoordinates(@NotNull String coordStr, World defaultWorld) {
         try {
             String[] parts = coordStr.split(",");
@@ -338,19 +318,12 @@ public class ConfigManager {
                     return world;
                 }
             }
-            // Если координаты без мира, возвращаем дефолтный (если есть)
             return defaultWorld;
         } catch (Exception e) {
             return defaultWorld;
         }
     }
     
-    /**
-     * Парсит строку координат формата "x,y,z" или "world,x,y,z"
-     * @param coordStr строка с координатами
-     * @param defaultWorld мир по умолчанию
-     * @return Location или null при ошибке
-     */
     private Location parseLocation(@NotNull String coordStr, @NotNull World defaultWorld) {
         try {
             String[] parts = coordStr.split(",");

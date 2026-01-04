@@ -115,11 +115,8 @@ public class CommandManager implements CommandExecutor {
                 send(sender, plugin.getMessagesManager().info(String.valueOf(remaining), String.valueOf(currentWave)));
                 return true;
             case "highlight":
-                // Проверяем режим подсветки из конфига
                 String highlightMode = plugin.getConfigManager().getHighlightMode();
                 
-                // В режиме ADMIN требуется право kmobwaves.admin
-                // В режиме ALL требуется право kmobwaves.highlight
                 if ("ADMIN".equalsIgnoreCase(highlightMode)) {
                     if (!sender.hasPermission("kmobwaves.admin")) {
                         send(sender, plugin.getMessagesManager().nopermission());
@@ -150,26 +147,21 @@ public class CommandManager implements CommandExecutor {
                 }
                 
                 try {
-                    // Определяем, для кого видна подсветка
                     Player viewer = null;
                     String visibilityMessage;
                     
                     if ("ADMIN".equalsIgnoreCase(highlightMode) && plugin.getGlowingManager().isProtocolLibAvailable()) {
-                        // В режиме ADMIN с ProtocolLib подсветка видна только администратору
                         viewer = player;
                         visibilityMessage = plugin.getMessagesManager().highlightVisibilityAdmin();
                     } else {
-                        // В режиме ALL или без ProtocolLib подсветка видна всем
                         viewer = null;
                         visibilityMessage = plugin.getMessagesManager().highlightVisibilityAll();
                     }
                     
-                    // Применяем подсветку через GlowingManager
                     int highlighted = plugin.getGlowingManager().applyGlowing(mobs, viewer);
                     
                     send(sender, plugin.getMessagesManager().highlightSuccess(highlighted, visibilityMessage));
                     
-                    // Сохраняем список мобов и убираем подсветку через 10 секунд
                     final List<Entity> glowingMobs = new ArrayList<>(mobs);
                     final Player finalViewer = viewer;
                     
@@ -181,9 +173,8 @@ public class CommandManager implements CommandExecutor {
                                 plugin.getLogger().warning("Ошибка при снятии подсветки мобов: " + e.getMessage());
                             }
                         }
-                    }, 200L).getTaskId(); // 10 seconds = 200 ticks
+                    }, 200L).getTaskId();
                     
-                    // Сохраняем ID задачи для возможной отмены при отключении плагина
                     plugin.getWavesManager().registerHighlightTask(taskId);
                     
                 } catch (Exception e) {
@@ -199,7 +190,6 @@ public class CommandManager implements CommandExecutor {
         }
     }
 
-    // Метод, используемый для отправки сообщения сендеру с использыванием колорайзера
     private void send(CommandSender sender, String msg) {
         sender.sendMessage(plugin.getConfigManager().COLORIZER.colorize(msg));
     }

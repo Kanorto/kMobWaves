@@ -2,9 +2,6 @@ package vv0ta3fa9.plugin.kMobWaves.main;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Класс для хранения данных о спавне моба с шансом
- */
 public class MobSpawnData {
     
     private final String mobName;
@@ -12,7 +9,7 @@ public class MobSpawnData {
     
     public MobSpawnData(@NotNull String mobName, double chance) {
         this.mobName = mobName;
-        this.chance = Math.max(0.0, Math.min(100.0, chance)); // Ограничиваем от 0 до 100
+        this.chance = Math.max(0.0, Math.min(100.0, chance));
     }
     
     @NotNull
@@ -24,11 +21,6 @@ public class MobSpawnData {
         return chance;
     }
     
-    /**
-     * Парсит строку формата "MobName:chance" или просто "MobName" (шанс по умолчанию 100)
-     * @param data строка с данными о мобе
-     * @return объект MobSpawnData
-     */
     @NotNull
     public static MobSpawnData parse(@NotNull String data) {
         if (data.contains(":")) {
@@ -43,4 +35,3 @@ public class MobSpawnData {
         return new MobSpawnData(data, 100.0);
     }
 }
-

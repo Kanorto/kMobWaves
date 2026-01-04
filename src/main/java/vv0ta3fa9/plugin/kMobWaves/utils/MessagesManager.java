@@ -27,9 +27,6 @@ public class MessagesManager {
         reloadMessages();
     }
     
-    /**
-     * Reloads the messages configuration from file
-     */
     public void reloadMessages() {
         if (messagesConfigFile == null) {
             messagesConfigFile = new File(plugin.getDataFolder(), "messages.yml");
@@ -46,7 +43,6 @@ public class MessagesManager {
         return messagesconfig.getString(path, defaultValue);
     }
 
-    // ---- system ---- //
     public String nopermission() {
         return getMessage("system.no-permission", "§cУ тебя нет прав.");
     }
@@ -57,14 +53,12 @@ public class MessagesManager {
         return messagesconfig.getString("system.console-only", "§cЭта команда доступна только из консоли!");
     }
 
-    // ---- another ---- //
     public String info(String count, String currentWave) {
         return getMessage("another.info", "&eОсталось &a%count% &eсуществ.")
                 .replace("%count%", count)
                 .replace("%wave%", currentWave);
     }
     
-    // ---- highlight ---- //
     public String highlightSuccess(int count, String visibility) {
         return getMessage("highlight.success", "&aПодсвечено %count% мобов %visibility%! Подсветка исчезнет через 10 секунд.")
                 .replace("%count%", String.valueOf(count))
