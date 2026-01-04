@@ -8,24 +8,18 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import vv0ta3fa9.plugin.kMobWaves.KMobWaves;
 
-/**
- * Менеджер для управления BossBar отображением прогресса волн
- */
 public class BossBarManager {
     
     private final KMobWaves plugin;
     private BossBar bossBar;
     private int currentWave;
     private int totalMobs;
-    private String titleTemplate; // Store title template for updates
+    private String titleTemplate;
     
     public BossBarManager(@NotNull KMobWaves plugin) {
         this.plugin = plugin;
     }
     
-    /**
-     * Создает новый BossBar для волны
-     */
     public void createBossBar(int waveNumber, int totalMobs, String customTitle) {
         if (!plugin.getConfigManager().isBossBarEnabled()) {
             return;
@@ -36,7 +30,6 @@ public class BossBarManager {
         this.currentWave = waveNumber;
         this.totalMobs = totalMobs;
         
-        // Store the title template for use in updates
         this.titleTemplate = customTitle != null ? customTitle : plugin.getConfigManager().getBossBarTitle();
         
         String title = formatTitle(this.titleTemplate, totalMobs, totalMobs);
@@ -48,7 +41,6 @@ public class BossBarManager {
         bossBar = Bukkit.createBossBar(title, color, style);
         bossBar.setProgress(1.0);
         
-        // Добавляем игроков в зависимости от режима
         String mode = plugin.getConfigManager().getBossBarMode();
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (shouldShowBossBar(player, mode)) {
@@ -57,9 +49,6 @@ public class BossBarManager {
         }
     }
     
-    /**
-     * Проверяет, должен ли игрок видеть BossBar
-     */
     private boolean shouldShowBossBar(@NotNull Player player, @NotNull String mode) {
         switch (mode.toUpperCase()) {
             case "ALL":
@@ -72,15 +61,11 @@ public class BossBarManager {
         }
     }
     
-    /**
-     * Обновляет прогресс BossBar
-     */
     public void updateProgress(int remainingMobs) {
         if (bossBar == null || !plugin.getConfigManager().isBossBarEnabled()) {
             return;
         }
         
-        // Use stored title template instead of always fetching from config
         String title = this.titleTemplate != null ? this.titleTemplate : plugin.getConfigManager().getBossBarTitle();
         title = formatTitle(title, remainingMobs, totalMobs);
         title = plugin.getConfigManager().COLORIZER.colorize(title);
@@ -91,9 +76,6 @@ public class BossBarManager {
         bossBar.setProgress(Math.max(0.0, Math.min(1.0, progress)));
     }
     
-    /**
-     * Удаляет BossBar
-     */
     public void removeBossBar() {
         if (bossBar != null) {
             bossBar.removeAll();
@@ -101,9 +83,6 @@ public class BossBarManager {
         }
     }
     
-    /**
-     * Добавляет игрока к BossBar
-     */
     public void addPlayer(@NotNull Player player) {
         if (bossBar != null && plugin.getConfigManager().isBossBarEnabled()) {
             String mode = plugin.getConfigManager().getBossBarMode();
@@ -113,9 +92,6 @@ public class BossBarManager {
         }
     }
     
-    /**
-     * Убирает игрока из BossBar
-     */
     public void removePlayer(@NotNull Player player) {
         if (bossBar != null) {
             bossBar.removePlayer(player);

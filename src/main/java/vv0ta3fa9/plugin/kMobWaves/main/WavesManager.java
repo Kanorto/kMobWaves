@@ -43,9 +43,8 @@ public class WavesManager implements Listener {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
     
-
     public void loadWaves() {
-        // Перезагружаем конфиг перед загрузкой волн
+
         plugin.getConfigManager().reloadConfig();
         waves.clear();
         waves.addAll(plugin.getConfigManager().getWaves());
@@ -54,7 +53,6 @@ public class WavesManager implements Listener {
         }
     }
     
-
     public boolean startWaves() {
         if (isActive) {
             plugin.getLogger().warning("Волны уже активны!");
@@ -74,9 +72,6 @@ public class WavesManager implements Listener {
         return true;
     }
     
-    /**
-     * Запускает волны с определенной волны по номеру
-     */
     public boolean startWavesFromWave(int waveNumber) {
         if (isActive) {
             plugin.getLogger().warning("Волны уже активны!");
@@ -90,7 +85,6 @@ public class WavesManager implements Listener {
             return false;
         }
         
-        // Ищем волну по номеру (count)
         int foundIndex = -1;
         for (int i = 0; i < waves.size(); i++) {
             if (waves.get(i).getCount() == waveNumber) {
@@ -124,10 +118,8 @@ public class WavesManager implements Listener {
         currentWaveIndex = -1;
         isCheckingCompletion = false;
         
-        // Удаляем BossBar
         bossBarManager.removeBossBar();
         
-        // Отменяем все задачи подсветки
         cancelHighlightTasks();
         
         if (taskId != -1) {
@@ -137,7 +129,6 @@ public class WavesManager implements Listener {
             });
         }
         
-
         runner.run(() -> {
             for (UUID mobId : new ArrayList<>(activeMobs.keySet())) {
                 Entity entity = plugin.getServer().getEntity(mobId);
@@ -153,17 +144,12 @@ public class WavesManager implements Listener {
         }
     }
 
-    /**
-     * Запускает конкретную волну
-     * @param waveIndex индекс волны
-     */
     private void startWave(int waveIndex) {
         if (waveIndex >= waves.size() || waveIndex < 0) {
             if (plugin.getConfigManager().getDebug()) {
                 plugin.getLogger().info("Все волны завершены.");
             }
             
-            // Проверяем настройку auto_restart
             if (plugin.getConfigManager().getAutoRestart()) {
                 if (plugin.getConfigManager().isWaveMessagesEnabled()) {
                     String message = plugin.getConfigManager().getAllWavesCompleteMessage();
@@ -172,7 +158,6 @@ public class WavesManager implements Listener {
                 currentWaveIndex = 0;
                 startWave(0);
             } else {
-                // Останавливаем волны
                 stopWaves();
             }
             return;
@@ -185,7 +170,6 @@ public class WavesManager implements Listener {
             plugin.getLogger().info("Запуск волны #" + wave.getCount() + " с " + wave.getMobsCount() + " мобами");
         }
         
-        // Отправляем сообщение о начале волны
         if (plugin.getConfigManager().isWaveMessagesEnabled()) {
             try {
                 String message = plugin.getConfigManager().getWaveStartMessage()
@@ -199,7 +183,6 @@ public class WavesManager implements Listener {
             }
         }
         
-        // Воспроизводим звук начала волны
         if (plugin.getConfigManager().isSoundsEnabled()) {
             try {
                 playSound(plugin.getConfigManager().getWaveStartSound(),
@@ -213,7 +196,6 @@ public class WavesManager implements Listener {
             }
         }
         
-        // Создаем BossBar
         try {
             bossBarManager.createBossBar(wave.getCount(), wave.getMobsCount(), wave.getCustomTitle());
         } catch (Exception e) {
@@ -249,19 +231,16 @@ public class WavesManager implements Listener {
         for (int i = 0; i < mobsCount; i++) {
             Location baseLocation = coordinates.get(random.nextInt(coordinates.size()));
             
-            // Применяем случайный разброс в радиусе spawn_radius
             Location spawnLoc = baseLocation.clone();
             if (spawnRadius > 0) {
                 double offsetX = (random.nextDouble() * 2 - 1) * spawnRadius;
                 double offsetZ = (random.nextDouble() * 2 - 1) * spawnRadius;
                 spawnLoc.add(offsetX, 0, offsetZ);
                 
-                // Adjust Y to highest block at the new X/Z location to prevent spawning in air or underground
                 try {
                     int highestY = spawnLoc.getWorld().getHighestBlockYAt(spawnLoc);
                     spawnLoc.setY(highestY + 1);
                 } catch (Exception e) {
-                    // If error occurs, keep original Y coordinate
                     if (plugin.getConfigManager().getDebug()) {
                         plugin.getLogger().warning("Ошибка при определении высоты для спавна: " + e.getMessage());
                     }
@@ -283,13 +262,6 @@ public class WavesManager implements Listener {
         }
     }
     
-    /**
-     * Выбирает моба по шансам
-     * @param mobsData список мобов
-     * @param random генератор случайных чисел
-     * @param totalChance общая сумма шансов
-     * @return выбранный моб или null
-     */
     @Nullable
     private MobSpawnData selectMobByChance(@NotNull List<MobSpawnData> mobsData, 
                                            @NotNull Random random, 
@@ -304,7 +276,6 @@ public class WavesManager implements Listener {
             }
         }
         
-        // Если не выбран (из-за округления), возвращаем последнего
         return mobsData.isEmpty() ? null : mobsData.get(mobsData.size() - 1);
     }
 
@@ -328,13 +299,10 @@ public class WavesManager implements Listener {
             Entity entity = spawned.getEntity().getBukkitEntity();
             
             if (entity != null) {
-                // Применяем множитель здоровья
                 if (entity instanceof LivingEntity) {
                     LivingEntity livingEntity = (LivingEntity) entity;
                     double healthMultiplier = wave.getHealthMultiplier();
                     if (healthMultiplier > 0 && healthMultiplier != 1.0) {
-                        // Clamp to reasonable range (0.01 to 100.0)
-                        // Allows health multipliers from 1% to 100x base health for maximum flexibility
                         healthMultiplier = Math.max(0.01, Math.min(100.0, healthMultiplier));
                         
                         try {
@@ -378,7 +346,6 @@ public class WavesManager implements Listener {
             if (activeMobs.containsKey(entityId)) {
                 activeMobs.remove(entityId);
                 
-                // Воспроизводим звук смерти моба
                 if (plugin.getConfigManager().isSoundsEnabled()) {
                     try {
                         playSound(plugin.getConfigManager().getMobDeathSound(),
@@ -391,7 +358,6 @@ public class WavesManager implements Listener {
                     }
                 }
                 
-                // Обновляем BossBar
                 try {
                     bossBarManager.updateProgress(activeMobs.size());
                 } catch (Exception e) {
@@ -438,15 +404,11 @@ public class WavesManager implements Listener {
         }
     }
     
-    /**
-     * Проверяет завершение волны и запускает следующую
-     */
     private void checkWaveCompletion() {
         if (!isActive || !activeMobs.isEmpty() || isCheckingCompletion) {
             return;
         }
         
-        // Проверяем, что индекс валиден
         if (currentWaveIndex < 0 || currentWaveIndex >= waves.size()) {
             if (plugin.getConfigManager().getDebug()) {
                 plugin.getLogger().warning("Невалидный индекс волны: " + currentWaveIndex);
@@ -463,7 +425,6 @@ public class WavesManager implements Listener {
                     "Следующая волна через " + currentWave.getExceptions() + " секунд");
         }
         
-        // Отправляем сообщение о завершении волны
         if (plugin.getConfigManager().isWaveMessagesEnabled()) {
             String message = plugin.getConfigManager().getWaveCompleteMessage()
                 .replace("%wave%", String.valueOf(currentWave.getCount()))
@@ -472,14 +433,12 @@ public class WavesManager implements Listener {
             broadcastMessage(plugin.getConfigManager().COLORIZER.colorize(message));
         }
         
-        // Воспроизводим звук завершения волны
         if (plugin.getConfigManager().isSoundsEnabled()) {
             playSound(plugin.getConfigManager().getWaveCompleteSound(),
                      plugin.getConfigManager().getWaveCompleteVolume(),
                      plugin.getConfigManager().getWaveCompletePitch());
         }
         
-        // Выполняем команды-награды
         executeRewards(currentWave.getRewards());
 
         int delayTicks = currentWave.getExceptions() * 20;
@@ -496,11 +455,6 @@ public class WavesManager implements Listener {
         }, delayTicks);
     }
     
-    /**
-     * Обновляет BossBar если количество мобов изменилось
-     * @param sizeBefore количество мобов до очистки
-     * @param sizeAfter количество мобов после очистки
-     */
     private void updateBossBarIfNeeded(int sizeBefore, int sizeAfter) {
         if (sizeBefore != sizeAfter && isActive) {
             try {
@@ -513,11 +467,8 @@ public class WavesManager implements Listener {
         }
     }
     
-    /**
-     * @return количество живых мобов
-     */
     public int getRemainingMobsCount() {
-        // Очищаем мертвых мобов синхронно
+
         int sizeBefore = activeMobs.size();
         Iterator<UUID> iterator = activeMobs.keySet().iterator();
         while (iterator.hasNext()) {
@@ -528,24 +479,16 @@ public class WavesManager implements Listener {
             }
         }
         
-        // Обновляем BossBar если количество изменилось
         int sizeAfter = activeMobs.size();
         updateBossBarIfNeeded(sizeBefore, sizeAfter);
         
         return sizeAfter;
     }
     
-    /**
-     * Проверяет, активны ли волны
-     * @return true если волны активны
-     */
     public boolean isActive() {
         return isActive;
     }
     
-    /**
-     * @return номер волны или -1 если не активна
-     */
     public int getCurrentWaveNumber() {
         if (!isActive || currentWaveIndex < 0 || currentWaveIndex >= waves.size()) {
             return -1;
@@ -553,15 +496,10 @@ public class WavesManager implements Listener {
         return waves.get(currentWaveIndex).getCount();
     }
     
-    /**
-     * Получает список активных мобов волны
-     * @return список активных сущностей мобов
-     */
     @NotNull
     public List<Entity> getActiveMobEntities() {
         List<Entity> entities = new ArrayList<>();
         
-        // Clean up dead entities while iterating
         int sizeBefore = activeMobs.size();
         Iterator<UUID> iterator = activeMobs.keySet().iterator();
         while (iterator.hasNext()) {
@@ -570,29 +508,20 @@ public class WavesManager implements Listener {
             if (entity != null && !entity.isDead()) {
                 entities.add(entity);
             } else {
-                // Remove dead or unloaded entities
                 iterator.remove();
             }
         }
         
-        // Обновляем BossBar если количество изменилось
         int sizeAfter = activeMobs.size();
         updateBossBarIfNeeded(sizeBefore, sizeAfter);
         
         return entities;
     }
     
-    /**
-     * Регистрирует задачу подсветки для отслеживания
-     * @param taskId ID задачи
-     */
     public void registerHighlightTask(int taskId) {
         highlightTasks.add(taskId);
     }
     
-    /**
-     * Отменяет все активные задачи подсветки
-     */
     public void cancelHighlightTasks() {
         for (int taskId : highlightTasks) {
             try {
@@ -606,19 +535,15 @@ public class WavesManager implements Listener {
         highlightTasks.clear();
     }
     
-    /**
-     * Воспроизводит звук для всех онлайн игроков
-     */
     private void playSound(String soundName, float volume, float pitch) {
         Sound sound;
         try {
             sound = Sound.valueOf(soundName.toUpperCase());
         } catch (IllegalArgumentException e) {
             plugin.getLogger().warning("Неверное название звука: " + soundName);
-            return; // Exit early if sound is invalid
+            return;
         }
         
-        // Play for all players
         for (Player player : Bukkit.getOnlinePlayers()) {
             try {
                 player.playSound(player.getLocation(), sound, volume, pitch);
@@ -630,18 +555,12 @@ public class WavesManager implements Listener {
         }
     }
     
-    /**
-     * Отправляет сообщение всем онлайн игрокам
-     */
     private void broadcastMessage(String message) {
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.sendMessage(message);
         }
     }
     
-    /**
-     * Выполняет команды-награды
-     */
     private void executeRewards(List<String> rewards) {
         if (rewards.isEmpty()) {
             return;

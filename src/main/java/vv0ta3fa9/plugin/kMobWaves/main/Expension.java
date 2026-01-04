@@ -30,7 +30,6 @@ public class Expension extends PlaceholderExpansion implements Relational{
         return plugin.getDescription().getVersion();
     }
 
-
     @Override
     public String onRequest(OfflinePlayer player, @NotNull String params) {
         if (params.equalsIgnoreCase("wave")) {

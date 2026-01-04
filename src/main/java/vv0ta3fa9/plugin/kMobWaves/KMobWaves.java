@@ -39,7 +39,6 @@ public final class KMobWaves extends JavaPlugin {
     @Override
     public void onDisable() {
         if (wavesManager != null) {
-            // Cancel all highlight tasks first
             wavesManager.cancelHighlightTasks();
             
             if (wavesManager.isActive()) {
@@ -75,23 +74,16 @@ public final class KMobWaves extends JavaPlugin {
         }
     }
 
-    /**
-     * Reloads plugin configuration without restarting the plugin
-     * This is the safe way to reload configuration that doesn't close the classloader
-     */
     public void reloadPluginConfig() {
         try {
-            // Reload messages configuration
             messagesManager.reloadMessages();
             
-            // If waves are active, stop them before reloading
             boolean wasActive = wavesManager.isActive();
             if (wasActive) {
                 wavesManager.stopWaves();
                 getLogger().info("Остановлены активные волны для перезагрузки конфигурации");
             }
             
-            // Reload waves configuration (this also reloads config.yml and colorizer)
             wavesManager.loadWaves();
             configManager.setupColorizer();
             
@@ -104,8 +96,6 @@ public final class KMobWaves extends JavaPlugin {
             throw e;
         }
     }
-
-    // ---- Геттеры ----
 
     public MessagesManager getMessagesManager() {
         return messagesManager;
