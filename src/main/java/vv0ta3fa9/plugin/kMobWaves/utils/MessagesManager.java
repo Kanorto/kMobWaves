@@ -24,7 +24,18 @@ public class MessagesManager {
         if (!messagesConfigFile.exists()) {
             plugin.saveResource("messages.yml", false);
         }
-        messagesconfig = YamlConfiguration.loadConfiguration(messagesConfigFile);
+        reloadMessages();
+    }
+    
+    public void reloadMessages() {
+        if (messagesConfigFile == null) {
+            messagesConfigFile = new File(plugin.getDataFolder(), "messages.yml");
+        }
+        if (messagesConfigFile.exists()) {
+            messagesconfig = YamlConfiguration.loadConfiguration(messagesConfigFile);
+        } else {
+            plugin.getLogger().warning("Messages file not found: " + messagesConfigFile.getPath());
+        }
     }
 
     private String getMessage(String path, String defaultValue) {
@@ -32,7 +43,6 @@ public class MessagesManager {
         return messagesconfig.getString(path, defaultValue);
     }
 
-    // ---- system ---- //
     public String nopermission() {
         return getMessage("system.no-permission", "§cУ тебя нет прав.");
     }
@@ -43,10 +53,23 @@ public class MessagesManager {
         return messagesconfig.getString("system.console-only", "§cЭта команда доступна только из консоли!");
     }
 
-    // ---- another ---- //
     public String info(String count, String currentWave) {
         return getMessage("another.info", "&eОсталось &a%count% &eсуществ.")
                 .replace("%count%", count)
                 .replace("%wave%", currentWave);
+    }
+    
+    public String highlightSuccess(int count, String visibility) {
+        return getMessage("highlight.success", "&aПодсвечено %count% мобов %visibility%! Подсветка исчезнет через 10 секунд.")
+                .replace("%count%", String.valueOf(count))
+                .replace("%visibility%", visibility);
+    }
+    
+    public String highlightVisibilityAdmin() {
+        return getMessage("highlight.visibility-admin", "только для вас");
+    }
+    
+    public String highlightVisibilityAll() {
+        return getMessage("highlight.visibility-all", "для всех игроков");
     }
 }

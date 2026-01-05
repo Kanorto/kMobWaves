@@ -50,9 +50,6 @@ public class ConfigManager {
         }
     }
     
-    /**
-     * Перезагружает конфиг из файла
-     */
     public void reloadConfig() {
         if (configFile == null) {
             configFile = new File(plugin.getDataFolder(), "config.yml");
@@ -63,8 +60,6 @@ public class ConfigManager {
             plugin.getLogger().warning("Конфиг файл не найден: " + configFile.getPath());
         }
     }
-
-    // ---- Гетеры ----
 
     public boolean getBoolean(String path, boolean def) {
         if (config == null) return def;
@@ -81,13 +76,108 @@ public class ConfigManager {
         return config.getStringList(path);
     }
 
-    // ---- Общие настройки ----
-
     public boolean getDebug() {
         return getBoolean("debug", true);
     }
     public String getPermissionInfo() {
         return getString("info_command_permission", "kmobwaves.user");
+    }
+    
+    public boolean getAutoRestart() {
+        return getBoolean("auto_restart", true);
+    }
+    
+    public int getSpawnRadius() {
+        return config != null ? config.getInt("spawn_radius", 5) : 5;
+    }
+    
+    public double getDefaultHealthMultiplier() {
+        return config != null ? config.getDouble("default_health_multiplier", 1.0) : 1.0;
+    }
+    
+    public boolean isWaveMessagesEnabled() {
+        return getBoolean("wave_messages.enabled", true);
+    }
+    
+    public String getWaveStartMessage() {
+        return getString("wave_messages.start", "&e&l>>> &6Волна %wave% началась! &e&l<<<");
+    }
+    
+    public String getWaveCompleteMessage() {
+        return getString("wave_messages.complete", "&a&l>>> &2Волна %wave% завершена! Следующая волна через %delay% секунд. &a&l<<<");
+    }
+    
+    public String getAllWavesCompleteMessage() {
+        return getString("wave_messages.all_complete", "&6&l>>> Все волны завершены! Перезапуск с первой волны... &6&l<<<");
+    }
+    
+    public boolean isSoundsEnabled() {
+        return getBoolean("sounds.enabled", true);
+    }
+    
+    public String getWaveStartSound() {
+        return getString("sounds.wave_start.sound", "ENTITY_ENDER_DRAGON_GROWL");
+    }
+    
+    public float getWaveStartVolume() {
+        return (float) (config != null ? config.getDouble("sounds.wave_start.volume", 1.0) : 1.0);
+    }
+    
+    public float getWaveStartPitch() {
+        return (float) (config != null ? config.getDouble("sounds.wave_start.pitch", 1.0) : 1.0);
+    }
+    
+    public String getWaveCompleteSound() {
+        return getString("sounds.wave_complete.sound", "UI_TOAST_CHALLENGE_COMPLETE");
+    }
+    
+    public float getWaveCompleteVolume() {
+        return (float) (config != null ? config.getDouble("sounds.wave_complete.volume", 1.0) : 1.0);
+    }
+    
+    public float getWaveCompletePitch() {
+        return (float) (config != null ? config.getDouble("sounds.wave_complete.pitch", 1.0) : 1.0);
+    }
+    
+    public String getMobDeathSound() {
+        return getString("sounds.mob_death.sound", "ENTITY_EXPERIENCE_ORB_PICKUP");
+    }
+    
+    public float getMobDeathVolume() {
+        return (float) (config != null ? config.getDouble("sounds.mob_death.volume", 0.5) : 0.5);
+    }
+    
+    public float getMobDeathPitch() {
+        return (float) (config != null ? config.getDouble("sounds.mob_death.pitch", 1.2) : 1.2);
+    }
+    
+    public boolean isBossBarEnabled() {
+        String mode = getBossBarMode();
+        return !"NONE".equalsIgnoreCase(mode);
+    }
+    
+    public String getBossBarMode() {
+        if (config != null && !config.contains("bossbar.mode") && config.contains("bossbar.enabled")) {
+            boolean enabled = config.getBoolean("bossbar.enabled", true);
+            return enabled ? "ALL" : "NONE";
+        }
+        return getString("bossbar.mode", "ALL").toUpperCase();
+    }
+    
+    public String getBossBarTitle() {
+        return getString("bossbar.title", "&6Волна %wave% &7- &eОсталось: %remaining%/%total%");
+    }
+    
+    public String getBossBarColor() {
+        return getString("bossbar.color", "YELLOW");
+    }
+    
+    public String getBossBarStyle() {
+        return getString("bossbar.style", "SEGMENTED_10");
+    }
+    
+    public String getHighlightMode() {
+        return getString("highlight.mode", "ADMIN").toUpperCase();
     }
 
     public void setupColorizer() {
@@ -106,7 +196,6 @@ public class ConfigManager {
             return waves;
         }
         
-
         if (!config.contains("Waves")) {
             return waves;
         }
@@ -118,15 +207,12 @@ public class ConfigManager {
         
         for (int i = 0; i < wavesList.size(); i++) {
             try {
-                // Получаем секцию для каждого элемента списка
                 String wavePath = "Waves." + i;
                 ConfigurationSection section = config.getConfigurationSection(wavePath);
                 
                 if (section == null) {
-                    // Если не получилось получить как секцию, пробуем через Map
                     Object waveObj = wavesList.get(i);
                     if (waveObj instanceof java.util.Map) {
-                        // Создаем временную секцию из Map
                         @SuppressWarnings("unchecked")
                         java.util.Map<String, Object> waveMap = (java.util.Map<String, Object>) waveObj;
                         section = config.createSection(wavePath);
@@ -146,6 +232,9 @@ public class ConfigManager {
                 List<String> coordinatesList = section.getStringList("coordinates");
                 int mobsCount = section.getInt("mobs-count", 10);
                 int exceptions = section.getInt("exceptions", 10);
+                double healthMultiplier = section.getDouble("health-multiplier", getDefaultHealthMultiplier());
+                String customTitle = section.getString("title", null);
+                List<String> rewards = section.getStringList("rewards");
 
                 List<MobSpawnData> mobs = new ArrayList<>();
                 for (String mobData : mobsList) {
@@ -161,7 +250,6 @@ public class ConfigManager {
                     plugin.getLogger().warning("Волна " + count + ": Нет доступных миров на сервере!");
                 }
                 
-                // Пытаемся определить мир из координат
                 World world = null;
                 for (String coordStr : coordinatesList) {
                     World coordWorld = getWorldFromCoordinates(coordStr, defaultWorld);
@@ -174,7 +262,6 @@ public class ConfigManager {
                     }
                 }
                 
-                // Если не удалось определить мир из координат, используется дефолтный
                 if (world == null) {
                     if (defaultWorld == null) {
                         plugin.getLogger().severe("Волна " + count + ": Не найден мир для спавна мобов! Укажите мир в координатах (world,x,y,z) или убедитесь, что миры загружены. Доступных миров: " + availableWorlds.size());
@@ -203,7 +290,8 @@ public class ConfigManager {
                     continue;
                 }
                 
-                waves.add(new WaveData(count, mobs, coordinates, mobsCount, exceptions));
+                waves.add(new WaveData(count, mobs, coordinates, mobsCount, exceptions, 
+                                      healthMultiplier, customTitle, rewards));
                 
                 if (getDebug()) {
                     plugin.getLogger().info("Загружена волна #" + count + " с " + mobsCount + " мобами");
@@ -220,12 +308,6 @@ public class ConfigManager {
         return waves;
     }
     
-    /**
-     * Определяет мир из строки координат
-     * @param coordStr строка с координатами
-     * @param defaultWorld мир по умолчанию
-     * @return World или null если не удалось определить
-     */
     private World getWorldFromCoordinates(@NotNull String coordStr, World defaultWorld) {
         try {
             String[] parts = coordStr.split(",");
@@ -236,19 +318,12 @@ public class ConfigManager {
                     return world;
                 }
             }
-            // Если координаты без мира, возвращаем дефолтный (если есть)
             return defaultWorld;
         } catch (Exception e) {
             return defaultWorld;
         }
     }
     
-    /**
-     * Парсит строку координат формата "x,y,z" или "world,x,y,z"
-     * @param coordStr строка с координатами
-     * @param defaultWorld мир по умолчанию
-     * @return Location или null при ошибке
-     */
     private Location parseLocation(@NotNull String coordStr, @NotNull World defaultWorld) {
         try {
             String[] parts = coordStr.split(",");

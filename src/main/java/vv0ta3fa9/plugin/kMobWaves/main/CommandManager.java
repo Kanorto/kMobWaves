@@ -4,8 +4,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import vv0ta3fa9.plugin.kMobWaves.KMobWaves;
 import vv0ta3fa9.plugin.kMobWaves.utils.Runner.Runner;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class CommandManager implements CommandExecutor {
 
@@ -21,7 +26,7 @@ public class CommandManager implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 
         if (args.length == 0) {
-            send(sender, "§cИспользование: /kmobwaves <reload|start|stop|info|force_start>");
+            send(sender, "§cИспользование: /kmobwaves <reload|start|stop|info|force_start|highlight>");
             return true;
         }
 
@@ -34,12 +39,13 @@ public class CommandManager implements CommandExecutor {
                     return true;
                 }
                 try {
-                    Bukkit.getPluginManager().disablePlugin(plugin);
-                    Bukkit.getPluginManager().enablePlugin(plugin);
+                    plugin.reloadPluginConfig();
                     send(sender, plugin.getMessagesManager().reloadplugin());
                 } catch (Exception e) {
-                    send(sender, "§4§lОшибка при перезагрузке плагина: " + e.getMessage());
-                    e.printStackTrace();
+                    send(sender, "§4§lОшибка при перезагрузке конфигурации: " + e.getMessage());
+                    if (plugin.getConfigManager().getDebug()) {
+                        e.printStackTrace();
+                    }
                 }
                 return true;
             case "start":
@@ -108,12 +114,82 @@ public class CommandManager implements CommandExecutor {
                 int currentWave = plugin.getWavesManager().getCurrentWaveNumber();
                 send(sender, plugin.getMessagesManager().info(String.valueOf(remaining), String.valueOf(currentWave)));
                 return true;
+            case "highlight":
+                String highlightMode = plugin.getConfigManager().getHighlightMode();
+                
+                if ("ADMIN".equalsIgnoreCase(highlightMode)) {
+                    if (!sender.hasPermission("kmobwaves.admin")) {
+                        send(sender, plugin.getMessagesManager().nopermission());
+                        return true;
+                    }
+                } else {
+                    if (!sender.hasPermission("kmobwaves.highlight")) {
+                        send(sender, plugin.getMessagesManager().nopermission());
+                        return true;
+                    }
+                }
+                
+                if (!(sender instanceof Player)) {
+                    send(sender, plugin.getMessagesManager().playeronly());
+                    return true;
+                }
+                if (!plugin.getWavesManager().isActive()) {
+                    send(sender, "§cВолны не активны!");
+                    return true;
+                }
+                
+                Player player = (Player) sender;
+                List<Entity> mobs = plugin.getWavesManager().getActiveMobEntities();
+                
+                if (mobs.isEmpty()) {
+                    send(sender, "§cНет активных мобов для подсветки!");
+                    return true;
+                }
+                
+                try {
+                    Player viewer = null;
+                    String visibilityMessage;
+                    
+                    if ("ADMIN".equalsIgnoreCase(highlightMode) && plugin.getGlowingManager().isProtocolLibAvailable()) {
+                        viewer = player;
+                        visibilityMessage = plugin.getMessagesManager().highlightVisibilityAdmin();
+                    } else {
+                        viewer = null;
+                        visibilityMessage = plugin.getMessagesManager().highlightVisibilityAll();
+                    }
+                    
+                    int highlighted = plugin.getGlowingManager().applyGlowing(mobs, viewer);
+                    
+                    send(sender, plugin.getMessagesManager().highlightSuccess(highlighted, visibilityMessage));
+                    
+                    final List<Entity> glowingMobs = new ArrayList<>(mobs);
+                    final Player finalViewer = viewer;
+                    
+                    int taskId = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        try {
+                            plugin.getGlowingManager().removeGlowing(glowingMobs, finalViewer);
+                        } catch (Exception e) {
+                            if (plugin.getConfigManager().getDebug()) {
+                                plugin.getLogger().warning("Ошибка при снятии подсветки мобов: " + e.getMessage());
+                            }
+                        }
+                    }, 200L).getTaskId();
+                    
+                    plugin.getWavesManager().registerHighlightTask(taskId);
+                    
+                } catch (Exception e) {
+                    send(sender, "§cОшибка при подсветке мобов: " + e.getMessage());
+                    if (plugin.getConfigManager().getDebug()) {
+                        e.printStackTrace();
+                    }
+                }
+                return true;
+            default:
+                send(sender, "§cНеизвестная подкоманда. Используйте: /kmobwaves <reload|start|stop|info|force_start|highlight>");
+                return true;
         }
-        send(sender, "§cИспользование: /kmobwaves <reload|start|stop|info|force_start>");
-        return true;
     }
 
-    // Метод, используемый для отправки сообщения сендеру с использыванием колорайзера
     private void send(CommandSender sender, String msg) {
         sender.sendMessage(plugin.getConfigManager().COLORIZER.colorize(msg));
     }
