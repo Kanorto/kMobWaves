@@ -2,6 +2,10 @@
 
 Плагин для создания системы волн спавна мифических мобов через MythicMobs API. Позволяет создавать последовательные волны мобов с настраиваемыми параметрами спавна, шансами появления и задержками между волнами.
 
+Plagin dlya sozdaniya sistemy voln spavna mificheskikh mobov cherez MythicMobs API. Pozvolyayet sozdavat' posledovatel'nyye volny mobov s nastraivayemymi parametrami spavna, shansami poyavleniya i zaderzhkami mezhdu volnami.
+210
+A plugin for creating a spawn wave system for mythical mobs using the MythicMobs API. It allows you to create sequential mob waves with customizable spawn parameters, spawn chances, and delays between waves.
+
 ## Требования
 
 - **Minecraft**: 1.21+
