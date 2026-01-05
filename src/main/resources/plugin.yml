@@ -1,17 +1,13 @@
-name: kMobWaves
-version: '1.1'
-main: vv0ta3fa9.plugin.kMobWaves.KMobWaves
-api-version: '1.21'
+name: kGiftMechanic
+version: '1.0'
+main: vv0ta3fa9.plugin.kGiftMechanic.MainClassManager
+api-version: '1.16'
+load: STARTUP
 authors: [ vv0t3afa9 ]
 website: t.me/kapybarkaaa
-depend:
-  - MythicMobs
-softdepend:
-  - PlaceholderAPI
-  - ProtocolLib
+
 commands:
-  kmobwaves:
-    description: Главная команда управления kMobWaves
-    usage: /kmobwaves <reload|start|stop|info|force_start|highlight>
-    aliases:
-      - kmw
+  kgm:
+    description: Команда для получения награды за подарки
+    usage: /kgm take
+    aliases: [kgiftmechanic]
