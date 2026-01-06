@@ -1,5 +1,51 @@
 serializer: LEGACY
 
+# Настройки отладки
+debug: false
+
+# Автоматический перезапуск волн после завершения всех
+auto_restart: true
+
+# Радиус спавна мобов вокруг координат (в блоках)
+spawn_radius: 5
+
+# Множитель здоровья мобов по умолчанию
+default_health_multiplier: 1.0
+
+# Сообщения о волнах
+wave_messages:
+  enabled: true
+  start: "&e&l>>> &6Волна %wave% началась! &e&l<<<"
+  complete: "&a&l>>> &2Волна %wave% завершена! Следующая волна через %delay% секунд. &a&l<<<"
+  all_complete: "&6&l>>> Все волны завершены! Перезапуск с первой волны... &6&l<<<"
+
+# Настройки звуков
+sounds:
+  enabled: true
+  wave_start:
+    sound: ENTITY_ENDER_DRAGON_GROWL
+    volume: 1.0
+    pitch: 1.0
+  wave_complete:
+    sound: UI_TOAST_CHALLENGE_COMPLETE
+    volume: 1.0
+    pitch: 1.0
+  mob_death:
+    sound: ENTITY_EXPERIENCE_ORB_PICKUP
+    volume: 0.5
+    pitch: 1.2
+
+# Настройки BossBar
+bossbar:
+  mode: ALL
+  title: "&6Волна %wave% &7- &eОсталось: %remaining%/%total%"
+  color: YELLOW
+  style: SEGMENTED_10
+
+# Настройки подсветки мобов
+highlight:
+  mode: ADMIN
+
 # Настройки игнорирования блоков при спавне мобов
 # Если включено, мобы не будут спавниться на листве и других полупрозрачных блоках
 # Вместо этого они появятся на твердой земле под этими блоками
@@ -122,38 +168,31 @@ spawn_location:
 # Конфигурация волн мобов
 # Формат координат: "x,y,z" или "world,x,y,z"
 # Формат мобов: "MobName:шанс" (например "Zombie:50" - 50% шанс)
+# Важно: для каждой волны используйте 2 пробела для отступа
 Waves:
   - count: 1
     mobs:
-      - "Zombie:100"
+      - "Zombie:50"
+      - "Skeleton:50"
     coordinates:
       - "0,64,0"
+      - "10,64,10"
     mobs-count: 5
     exceptions: 30
     health-multiplier: 1.0
     title: "&cВолна 1"
     rewards:
       - "say Волна 1 завершена!"
-
-# Координаты блоков-подарков в формате "world:x:y:z"
-gifts:
-  locations:
-    - "world:100:64:200"
-    - "world:150:64:250"
-    - "world:200:64:300"
-
-
-# Команды, которые выполняются при получении награды
-# Используйте %sender% для замены на имя игрока
-command-on-complete:
-  - "give %sender% diamond 10"
-  - "say %sender% получил награду за все подарки!"
-  # Добавьте больше команд по необходимости
-
-# Сообщения
-messages:
-  gift-collected: "&aВы забрали 1 подарок!"
-  gift-already-collected: "&cВы уже собрали этот подарок!"
-  reward-success: "&aМолодец! Ты выполнил все задания!"
-  not-all-gifts: "&cВы собрали не все подарки! Собрано: %collected%/%total%"
-  already-claimed: "&cВы уже получили награду!"
+  - count: 2
+    mobs:
+      - "Zombie:30"
+      - "Skeleton:70"
+    coordinates:
+      - "world,0,64,0"
+    mobs-count: 10
+    exceptions: 30
+    health-multiplier: 1.5
+    title: "&cВолна 2"
+    rewards:
+      - "say Волна 2 завершена!"
+      - "give %player% diamond 1"
