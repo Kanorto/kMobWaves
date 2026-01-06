@@ -119,6 +119,22 @@ spawn_location:
   # Максимальное количество блоков вниз для поиска твердой земли
   max_search_depth: 64
 
+# Конфигурация волн мобов
+# Формат координат: "x,y,z" или "world,x,y,z"
+# Формат мобов: "MobName:шанс" (например "Zombie:50" - 50% шанс)
+Waves:
+  - count: 1
+    mobs:
+      - "Zombie:100"
+    coordinates:
+      - "0,64,0"
+    mobs-count: 5
+    exceptions: 30
+    health-multiplier: 1.0
+    title: "&cВолна 1"
+    rewards:
+      - "say Волна 1 завершена!"
+
 # Координаты блоков-подарков в формате "world:x:y:z"
 gifts:
   locations:
