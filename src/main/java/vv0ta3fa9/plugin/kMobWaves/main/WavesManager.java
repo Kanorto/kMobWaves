@@ -6,7 +6,9 @@ import io.lumine.mythic.bukkit.MythicBukkit;
 import io.lumine.mythic.core.mobs.ActiveMob;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -21,7 +23,6 @@ import vv0ta3fa9.plugin.kMobWaves.utils.Runner.Runner;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.Set;
 
 public class WavesManager implements Listener {
     
@@ -213,6 +214,9 @@ public class WavesManager implements Listener {
         List<MobSpawnData> mobsData = wave.getMobs();
         int mobsCount = wave.getMobsCount();
         int spawnRadius = plugin.getConfigManager().getSpawnRadius();
+        boolean ignoreTransparent = plugin.getConfigManager().isIgnoreTransparentBlocksEnabled();
+        Set<Material> ignoredBlocks = plugin.getConfigManager().getIgnoredBlocks();
+        int maxSearchDepth = plugin.getConfigManager().getMaxSearchDepth();
         
         if (coordinates.isEmpty() || mobsData.isEmpty()) {
             plugin.getLogger().warning("Волна #" + wave.getCount() + " имеет пустые данные!");
@@ -240,6 +244,11 @@ public class WavesManager implements Listener {
                 try {
                     int highestY = spawnLoc.getWorld().getHighestBlockYAt(spawnLoc);
                     spawnLoc.setY(highestY + 1);
+                    
+                    // Check if we should ignore transparent blocks and find solid ground
+                    if (ignoreTransparent && !ignoredBlocks.isEmpty()) {
+                        spawnLoc = findSolidGround(spawnLoc, ignoredBlocks, maxSearchDepth);
+                    }
                 } catch (Exception e) {
                     if (plugin.getConfigManager().getDebug()) {
                         plugin.getLogger().warning("Ошибка при определении высоты для спавна: " + e.getMessage());
@@ -260,6 +269,55 @@ public class WavesManager implements Listener {
         if (plugin.getConfigManager().getDebug()) {
             plugin.getLogger().info("Заспавнено " + spawned + " мобов для волны #" + wave.getCount());
         }
+    }
+    
+    /**
+     * Finds solid ground below the given location, skipping ignored blocks like leaves and logs.
+     * 
+     * @param location The starting location (one block above the highest block)
+     * @param ignoredBlocks Set of materials to ignore when looking for ground
+     * @param maxSearchDepth Maximum number of blocks to search down
+     * @return A new location on solid ground, or the original location if no solid ground is found
+     */
+    @NotNull
+    private Location findSolidGround(@NotNull Location location, @NotNull Set<Material> ignoredBlocks, int maxSearchDepth) {
+        Location searchLoc = location.clone();
+        // Start checking from the block below the spawn location (which is the highest block)
+        int startY = (int) searchLoc.getY() - 1;
+        int minY = Math.max(searchLoc.getWorld().getMinHeight(), startY - maxSearchDepth);
+        
+        for (int y = startY; y >= minY; y--) {
+            searchLoc.setY(y);
+            Block block = searchLoc.getBlock();
+            Material blockType = block.getType();
+            
+            // Skip air blocks and ignored blocks
+            if (blockType.isAir() || ignoredBlocks.contains(blockType)) {
+                continue;
+            }
+            
+            // Found a solid block that is not in the ignored list
+            // Return the location one block above this solid block
+            Location result = searchLoc.clone();
+            result.setY(y + 1);
+            
+            if (plugin.getConfigManager().getDebug()) {
+                int blocksSkipped = startY - y;
+                if (blocksSkipped > 0) {
+                    plugin.getLogger().info("Найдена твердая земля на Y=" + y + " (" + blockType.name() + 
+                            "), пропущено " + blocksSkipped + " блоков");
+                }
+            }
+            
+            return result;
+        }
+        
+        // No solid ground found within the search depth, return original location
+        if (plugin.getConfigManager().getDebug()) {
+            plugin.getLogger().warning("Не удалось найти твердую землю в пределах " + maxSearchDepth + 
+                    " блоков, используется исходная позиция");
+        }
+        return location;
     }
     
     @Nullable
