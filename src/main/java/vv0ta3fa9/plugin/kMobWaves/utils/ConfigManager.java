@@ -2,6 +2,7 @@ package vv0ta3fa9.plugin.kMobWaves.utils;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -20,7 +21,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ConfigManager {
     private final KMobWaves plugin;
@@ -28,11 +31,13 @@ public class ConfigManager {
     private File configFile;
     public Colorizer COLORIZER;
     private Runner runner;
+    private Set<Material> ignoredBlocks;
 
     public ConfigManager(KMobWaves plugin, Runner runner) {
         this.plugin = plugin;
         this.runner = runner;
         loadConfigFiles();
+        loadIgnoredBlocks();
     }
 
     private void loadConfigFiles() {
@@ -56,8 +61,27 @@ public class ConfigManager {
         }
         if (configFile.exists()) {
             config = YamlConfiguration.loadConfiguration(configFile);
+            loadIgnoredBlocks();
         } else {
             plugin.getLogger().warning("Конфиг файл не найден: " + configFile.getPath());
+        }
+    }
+    
+    private void loadIgnoredBlocks() {
+        ignoredBlocks = new HashSet<>();
+        List<String> blockNames = getStringList("spawn_location.ignored_blocks");
+        for (String blockName : blockNames) {
+            try {
+                Material material = Material.valueOf(blockName.toUpperCase());
+                ignoredBlocks.add(material);
+            } catch (IllegalArgumentException e) {
+                if (getDebug()) {
+                    plugin.getLogger().warning("Неизвестный блок в ignored_blocks: " + blockName);
+                }
+            }
+        }
+        if (getDebug() && !ignoredBlocks.isEmpty()) {
+            plugin.getLogger().info("Загружено " + ignoredBlocks.size() + " игнорируемых блоков для спавна");
         }
     }
 
@@ -89,6 +113,19 @@ public class ConfigManager {
     
     public int getSpawnRadius() {
         return config != null ? config.getInt("spawn_radius", 5) : 5;
+    }
+    
+    public boolean isIgnoreTransparentBlocksEnabled() {
+        return getBoolean("spawn_location.ignore_transparent_blocks", true);
+    }
+    
+    @NotNull
+    public Set<Material> getIgnoredBlocks() {
+        return ignoredBlocks != null ? ignoredBlocks : new HashSet<>();
+    }
+    
+    public int getMaxSearchDepth() {
+        return config != null ? config.getInt("spawn_location.max_search_depth", 64) : 64;
     }
     
     public double getDefaultHealthMultiplier() {
